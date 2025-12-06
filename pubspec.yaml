@@ -1,0 +1,88 @@
+name: barber_pro
+description: "BarberPro — Real-Time Barber Booking & Queue Management System"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Firebase
+  firebase_core: ^2.32.0
+  firebase_auth: ^4.20.0
+  cloud_firestore: ^4.17.5
+  firebase_storage: ^11.6.5
+  firebase_messaging: ^14.7.10
+  google_sign_in: ^6.3.0
+
+  # State Management
+  provider: ^6.1.0
+
+  # Navigation & Routing
+  go_router: ^13.0.0
+
+  # UI & Icons
+  cupertino_icons: ^1.0.6
+  google_fonts: ^6.3.0
+  flutter_svg: ^2.0.0
+
+  # Local Storage & Caching
+  shared_preferences: ^2.2.2
+  cached_network_image: ^3.4.0
+
+  # Image & File Handling
+  image_picker: ^1.0.4
+  # Use a newer image_cropper that supports the V2 Android embedding
+  image_cropper: ^11.0.0
+  image_cropper_for_web: ^7.0.0
+
+  # Notifications
+  flutter_local_notifications: ^17.2.4
+
+  # Date & Time
+  intl: ^0.19.0
+
+  # HTTP (for Firebase REST calls if needed)
+  http: ^1.1.0
+  # Deep linking for phone calls
+  url_launcher: ^6.1.10
+
+  # Logging & Error Handling
+  logger: ^2.1.0
+
+  # Utilities
+  uuid: ^4.0.0
+  equatable: ^2.0.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+  mockito: ^5.4.2
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/barber_logo.svg
+    - assets/terms_and_conditions.md
+
+  # Fonts are loaded via google_fonts package
+  # fonts:
+  #   - family: Poppins
+  #     fonts:
+  #       - asset: assets/fonts/Poppins-Regular.ttf
+  #       - asset: assets/fonts/Poppins-Bold.ttf
+  #         weight: 700
+  #       - asset: assets/fonts/Poppins-SemiBold.ttf
+  #         weight: 600
+  #   - family: Inter
+  #     fonts:
+  #       - asset: assets/fonts/Inter-Regular.ttf
+  #       - asset: assets/fonts/Inter-Bold.ttf
+  #         weight: 700

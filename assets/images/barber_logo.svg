@@ -1,0 +1,30 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Barber pole stripes -->
+  <rect x="40" y="40" width="120" height="120" rx="10" fill="#f5f5f5" stroke="#333" stroke-width="2"/>
+  
+  <!-- Red stripe -->
+  <rect x="40" y="40" width="40" height="120" fill="#d32f2f" rx="10"/>
+  
+  <!-- White stripe -->
+  <rect x="80" y="40" width="40" height="120" fill="#ffffff" stroke="#333" stroke-width="1"/>
+  
+  <!-- Blue stripe -->
+  <rect x="120" y="40" width="40" height="120" fill="#1976d2" rx="10"/>
+  
+  <!-- Center circle with scissors -->
+  <circle cx="100" cy="100" r="50" fill="rgba(255,255,255,0.8)" stroke="#333" stroke-width="2"/>
+  
+  <!-- Scissors (simplified) -->
+  <g transform="translate(100, 100)">
+    <!-- Left blade -->
+    <path d="M -8 -15 Q -12 -8 -8 0 L -2 0 Q -6 -8 -2 -15 Z" fill="#333"/>
+    <!-- Right blade -->
+    <path d="M 8 -15 Q 12 -8 8 0 L 2 0 Q 6 -8 2 -15 Z" fill="#333"/>
+    <!-- Handles -->
+    <circle cx="-5" cy="-18" r="3" fill="#333"/>
+    <circle cx="5" cy="-18" r="3" fill="#333"/>
+  </g>
+  
+  <!-- Company name text (optional) -->
+  <text x="100" y="180" font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle" fill="#333">BookYourBarber</text>
+</svg>

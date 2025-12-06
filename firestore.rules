@@ -1,0 +1,145 @@
+// Firestore Security Rules for BarberPro
+// Copy this into your Firebase Console > Firestore Database > Rules
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is authenticated
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    // Helper function to get current user ID
+    function userId() {
+      return request.auth.uid;
+    }
+    
+    // Helper function to get user document
+    function getUserDoc() {
+      return get(/databases/$(database)/documents/users/$(userId())).data;
+    }
+    
+    // Helper function to check user type
+    function isUserType(userType) {
+      return getUserDoc().userType == userType;
+    }
+    
+    // Users Collection
+    match /users/{userId} {
+      // Any authenticated user can read their own document
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      
+      // Any authenticated user can write to their own document
+      allow write: if isSignedIn() && request.auth.uid == userId;
+      
+      // Barbers and Customers can be created by Google Sign-In
+      allow create: if isSignedIn() && 
+                       (request.resource.data.userType == 'customer' || 
+                        request.resource.data.userType == 'barber') &&
+                       request.resource.data.uid == request.auth.uid;
+      
+      // Admin can read all users
+      match /{allUsers=**} {
+        allow read: if isSignedIn() && isUserType('admin');
+      }
+    }
+    
+    // Barbers Collection
+    match /barbers/{barberId} {
+      // Anyone can read barber profiles (for browsing)
+      allow read: if isSignedIn();
+      
+      // Barber can update their own shop
+      allow update: if isSignedIn() && 
+                       isUserType('barber') && 
+                       request.auth.uid == barberId;
+      
+      // Barber can create their own shop
+      allow create: if isSignedIn() && 
+                       isUserType('barber') &&
+                       request.auth.uid == barberId &&
+                       !request.resource.data.keys().hasAny(['agentId', 'verified']);
+      
+      // Admin can read and manage all barber data
+      allow read, write: if isSignedIn() && isUserType('admin');
+      
+      // Prevent non-admin users from modifying critical fields
+      allow update: if isSignedIn() && 
+                       !request.resource.data.diff(resource.data).affectedKeys().hasAny(
+                         ['verified', 'totalEarnings', 'agentId']
+                       );
+    }
+    
+    // Bookings Collection
+    match /bookings/{bookingId} {
+      // Customer can read their own bookings
+      allow read: if isSignedIn() && 
+                     request.auth.uid == resource.data.customerId;
+      
+      // Barber can read bookings for their shop
+      allow read: if isSignedIn() && 
+                     request.auth.uid == resource.data.barberId;
+      
+      // Admin can read all bookings
+      allow read: if isSignedIn() && isUserType('admin');
+      
+      // Customer can create booking
+      allow create: if isSignedIn() && 
+                       request.auth.uid == request.resource.data.customerId &&
+                       isUserType('customer') &&
+                       request.resource.data.status == 'waiting' &&
+                       request.resource.data.paymentMethod == 'cash' &&
+                       request.resource.data.paymentStatus == 'pending';
+      
+      // Customer can update their booking (cancel, add rating)
+      allow update: if isSignedIn() && 
+                       request.auth.uid == resource.data.customerId &&
+                       (
+                         request.resource.data.status == 'cancelled' ||
+                         (request.resource.data.rating != null && 
+                          request.resource.data.review != null)
+                       );
+      
+      // Barber can update booking status and queue position
+      allow update: if isSignedIn() && 
+                       request.auth.uid == resource.data.barberId &&
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(
+                         ['status', 'estimatedWaitTime', 'completionTime', 'actualServiceTime']
+                       );
+      
+      // Admin can read and update all bookings
+      allow update: if isSignedIn() && isUserType('admin');
+      
+      // Prevent payment status changes except by admin
+      allow update: if !(request.resource.data.paymentStatus != resource.data.paymentStatus) ||
+                       (isSignedIn() && isUserType('admin'));
+    }
+    
+    // Admins Collection
+    match /admins/{adminId} {
+      // Only admin can read admin documents
+      allow read: if isSignedIn() && isUserType('admin') && request.auth.uid == adminId;
+      
+      // Admin creation is restricted (should be done via Cloud Functions)
+      allow create, write: if false;
+    }
+    
+    // Agents Collection
+    match /agents/{agentId} {
+      // Agents can read their own data
+      allow read: if isSignedIn() && request.auth.uid == agentId;
+      
+      // Admin can read all agents
+      allow read: if isSignedIn() && isUserType('admin');
+      
+      // Only admin can create/update/delete agents
+      allow write: if isSignedIn() && isUserType('admin');
+    }
+    
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
