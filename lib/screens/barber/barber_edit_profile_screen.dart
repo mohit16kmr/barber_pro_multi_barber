@@ -225,9 +225,12 @@ class _BarberEditProfileScreenState extends State<BarberEditProfileScreen> {
                 referralCode: referralCode.isNotEmpty ? referralCode : _barberDoc!.referralCode,
               );
               await barberService.updateBarber(_barberDoc!.barberId, updatedBarber);
-              // Refresh provider so admin/other UI see updated barber data
+              // Light refresh: fetch the single barber and select it in the provider
               try {
-                await context.read<BarberProvider>().loadAllBarbers();
+                final refreshed = await context.read<BarberProvider>().getBarberById(_barberDoc!.barberId);
+                if (refreshed != null) {
+                  context.read<BarberProvider>().selectBarber(refreshed);
+                }
               } catch (_) {}
             } catch (e) {
               if (mounted) {
