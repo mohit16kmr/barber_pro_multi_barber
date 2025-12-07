@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../../providers/auth_provider.dart';
+import 'package:barber_pro/providers/barber_provider.dart';
 import '../../models/index.dart';
 import '../../services/index.dart';
 
@@ -210,31 +211,35 @@ class _BarberEditProfileScreenState extends State<BarberEditProfileScreen> {
 
       if (!mounted) return;
 
-      if (ok) {
-        // Attempt to persist barber services to Firestore (if barber doc exists)
-        if (_barberDoc != null) {
-          try {
-            final barberService = BarberService();
-            final updatedBarber = _barberDoc!.copyWith(
-              services: _services,
-              shopName: shopId.isNotEmpty ? shopId : _barberDoc!.shopName,
-              ownerName: name.isNotEmpty ? name : _barberDoc!.ownerName,
-              phone: phone.isNotEmpty ? phone : _barberDoc!.phone,
-              address: city.isNotEmpty ? city : _barberDoc!.address,
-              referralCode: referralCode.isNotEmpty ? referralCode : _barberDoc!.referralCode,
-            );
-            await barberService.updateBarber(_barberDoc!.barberId, updatedBarber);
-          } catch (e) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Profile updated but failed to save services: $e'),
-                  backgroundColor: Colors.orange,
-                ),
+        if (ok) {
+          // Attempt to persist barber services to Firestore (if barber doc exists)
+          if (_barberDoc != null) {
+            try {
+              final barberService = BarberService();
+              final updatedBarber = _barberDoc!.copyWith(
+                services: _services,
+                shopName: shopId.isNotEmpty ? shopId : _barberDoc!.shopName,
+                ownerName: name.isNotEmpty ? name : _barberDoc!.ownerName,
+                phone: phone.isNotEmpty ? phone : _barberDoc!.phone,
+                address: city.isNotEmpty ? city : _barberDoc!.address,
+                referralCode: referralCode.isNotEmpty ? referralCode : _barberDoc!.referralCode,
               );
+              await barberService.updateBarber(_barberDoc!.barberId, updatedBarber);
+              // Refresh provider so admin/other UI see updated barber data
+              try {
+                await context.read<BarberProvider>().loadAllBarbers();
+              } catch (_) {}
+            } catch (e) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Profile updated but failed to save services: $e'),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+              }
             }
           }
-        }
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
