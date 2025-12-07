@@ -33,6 +33,7 @@ class _BarberEditProfileScreenState extends State<BarberEditProfileScreen> {
   Barber? _barberDoc;
   bool _barberNotFound = false;
   final double _rating = 4.5;
+  bool _isRefreshingBarber = false;
 
   // Photo handling
   final ImagePicker _imagePicker = ImagePicker();
@@ -227,11 +228,16 @@ class _BarberEditProfileScreenState extends State<BarberEditProfileScreen> {
               await barberService.updateBarber(_barberDoc!.barberId, updatedBarber);
               // Light refresh: fetch the single barber and select it in the provider
               try {
+                if (mounted) setState(() => _isRefreshingBarber = true);
                 final refreshed = await context.read<BarberProvider>().getBarberById(_barberDoc!.barberId);
                 if (refreshed != null) {
                   context.read<BarberProvider>().selectBarber(refreshed);
                 }
-              } catch (_) {}
+              } catch (_) {
+                // ignore
+              } finally {
+                if (mounted) setState(() => _isRefreshingBarber = false);
+              }
             } catch (e) {
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -585,6 +591,23 @@ class _BarberEditProfileScreenState extends State<BarberEditProfileScreen> {
               ),
 
               const SizedBox(height: 24),
+
+              // Refresh indicator for single-barber fetch
+              if (_isRefreshingBarber)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12.0),
+                  child: Row(
+                    children: const [
+                      SizedBox(
+                        height: 16,
+                        width: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      SizedBox(width: 8),
+                      Text('Refreshing barber data...'),
+                    ],
+                  ),
+                ),
 
               const SizedBox(height: 8),
 
