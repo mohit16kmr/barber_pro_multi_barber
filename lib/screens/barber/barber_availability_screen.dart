@@ -48,8 +48,9 @@ class _BarberAvailabilityScreenState extends State<BarberAvailabilityScreen> {
                 borderRadius: BorderRadius.circular(14),
                 boxShadow: [
                   BoxShadow(
-                    color: (_isOnline ? Colors.green : Colors.grey)
-                        .withOpacity(0.3),
+                    color: (_isOnline ? Colors.green : Colors.grey).withAlpha(
+                      (0.3 * 255).round(),
+                    ),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -111,9 +112,13 @@ class _BarberAvailabilityScreenState extends State<BarberAvailabilityScreen> {
                       );
                     },
                     activeThumbColor: Colors.white,
-                    activeTrackColor: Colors.white.withOpacity(0.4),
+                    activeTrackColor: Colors.white.withAlpha(
+                      (0.4 * 255).round(),
+                    ),
                     inactiveThumbColor: Colors.white70,
-                    inactiveTrackColor: Colors.white.withOpacity(0.2),
+                    inactiveTrackColor: Colors.white.withAlpha(
+                      (0.2 * 255).round(),
+                    ),
                   ),
                 ],
               ),
@@ -127,10 +132,7 @@ class _BarberAvailabilityScreenState extends State<BarberAvailabilityScreen> {
                 children: [
                   const Text(
                     'Working Hours',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
                   ..._schedule.entries.map((entry) {
@@ -176,10 +178,7 @@ class _BarberAvailabilityScreenState extends State<BarberAvailabilityScreen> {
                   icon: const Icon(Icons.save),
                   label: const Text(
                     'Save Schedule',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -205,12 +204,14 @@ class _BarberAvailabilityScreenState extends State<BarberAvailabilityScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isOpen ? Colors.blue.withOpacity(0.2) : Colors.red.withOpacity(0.2),
+          color: isOpen
+              ? Colors.blue.withAlpha((0.2 * 255).round())
+              : Colors.red.withAlpha((0.2 * 255).round()),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.08),
+            color: Colors.grey.withAlpha((0.08 * 255).round()),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -272,9 +273,9 @@ class _BarberAvailabilityScreenState extends State<BarberAvailabilityScreen> {
               });
             },
             activeThumbColor: Colors.green,
-            activeTrackColor: Colors.green.withOpacity(0.4),
+            activeTrackColor: Colors.green.withAlpha((0.4 * 255).round()),
             inactiveThumbColor: Colors.grey,
-            inactiveTrackColor: Colors.grey.withOpacity(0.2),
+            inactiveTrackColor: Colors.grey.withAlpha((0.2 * 255).round()),
           ),
         ],
       ),

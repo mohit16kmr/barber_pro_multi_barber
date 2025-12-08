@@ -13,7 +13,7 @@ import 'routes/app_routes.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Set flavor config for ADMIN
   FlavorConfig.setFlavor(
     AppFlavor.admin,
@@ -51,16 +51,20 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => BarberProvider()),
         ChangeNotifierProvider(create: (_) => BookingProvider()),
       ],
-      child: Builder(builder: (context) {
-        // Create router using the provider's auth state stream so redirects
-        // are based on the same auth state the provider exposes.
-        final router = createAppRouter(context.read<AuthProvider>().authStateChanges);
-        return MaterialApp.router(
-          title: FlavorConfig.displayName,
-          theme: AppTheme.lightTheme(),
-          routerConfig: router,
-        );
-      }),
+      child: Builder(
+        builder: (context) {
+          // Create router using the provider's auth state stream so redirects
+          // are based on the same auth state the provider exposes.
+          final router = createAppRouter(
+            context.read<AuthProvider>().authStateChanges,
+          );
+          return MaterialApp.router(
+            title: FlavorConfig.displayName,
+            theme: AppTheme.lightTheme(),
+            routerConfig: router,
+          );
+        },
+      ),
     );
   }
 }

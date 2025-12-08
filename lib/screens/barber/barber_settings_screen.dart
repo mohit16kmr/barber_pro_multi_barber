@@ -45,7 +45,9 @@ class _BarberSettingsScreenState extends State<BarberSettingsScreen> {
               color: Colors.orange,
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Change password functionality coming soon')),
+                  const SnackBar(
+                    content: Text('Change password functionality coming soon'),
+                  ),
                 );
               },
             ),
@@ -98,7 +100,9 @@ class _BarberSettingsScreenState extends State<BarberSettingsScreen> {
               color: Colors.green,
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Payment methods - feature coming soon')),
+                  const SnackBar(
+                    content: Text('Payment methods - feature coming soon'),
+                  ),
                 );
               },
             ),
@@ -112,7 +116,9 @@ class _BarberSettingsScreenState extends State<BarberSettingsScreen> {
               color: Colors.cyan,
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Language settings - coming soon')),
+                  const SnackBar(
+                    content: Text('Language settings - coming soon'),
+                  ),
                 );
               },
             ),
@@ -135,7 +141,9 @@ class _BarberSettingsScreenState extends State<BarberSettingsScreen> {
                   context: context,
                   builder: (ctx) => AlertDialog(
                     title: const Text('Help & Support'),
-                    content: const Text('Contact us at: support@barberpro.com\n\nPhone: +91 1800-BARBER-1'),
+                    content: const Text(
+                      'Contact us at: support@barberpro.com\n\nPhone: +91 1800-BARBER-1',
+                    ),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(ctx),
@@ -202,10 +210,7 @@ class _BarberSettingsScreenState extends State<BarberSettingsScreen> {
                   },
                   label: const Text(
                     'Logout',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -256,26 +261,24 @@ class _BarberSettingsScreenState extends State<BarberSettingsScreen> {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.2),
+            color: color.withAlpha((0.2 * 255).round()),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, color: color, size: 20),
         ),
         title: Text(
           title,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 15,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
         ),
         subtitle: Text(
           subtitle,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
+          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
         ),
-        trailing: Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey[400]),
+        trailing: Icon(
+          Icons.arrow_forward_ios,
+          size: 14,
+          color: Colors.grey[400],
+        ),
         onTap: onTap,
       ),
     );
@@ -298,30 +301,24 @@ class _BarberSettingsScreenState extends State<BarberSettingsScreen> {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.blue.withOpacity(0.2),
+            color: Colors.blue.withAlpha((0.2 * 255).round()),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, color: Colors.blue, size: 20),
         ),
         title: Text(
           title,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 15,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
         ),
         subtitle: Text(
           subtitle,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
+          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
         ),
         trailing: Switch(
           value: value,
           onChanged: onChanged,
           activeThumbColor: Colors.green,
-          activeTrackColor: Colors.green.withOpacity(0.3),
+          activeTrackColor: Colors.green.withAlpha((0.3 * 255).round()),
         ),
       ),
     );
@@ -344,10 +341,7 @@ class _BarberSettingsScreenState extends State<BarberSettingsScreen> {
               context.read<AuthProvider>().logout();
               context.go('/login');
             },
-            child: const Text(
-              'Logout',
-              style: TextStyle(color: Colors.red),
-            ),
+            child: const Text('Logout', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),

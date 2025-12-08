@@ -56,7 +56,7 @@ int calculateEstimatedWaitTime(
   List<List<Service>> queueServices,
 ) {
   int totalMinutes = 0;
-  
+
   // Sum duration of all services in queue
   for (final services in queueServices) {
     for (final service in services) {

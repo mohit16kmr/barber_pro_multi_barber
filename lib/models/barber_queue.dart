@@ -53,8 +53,7 @@ class BarberQueue extends Equatable {
       completedAt: data['completedAt'] != null
           ? (data['completedAt'] as Timestamp).toDate()
           : null,
-      rating:
-          data['rating'] is num ? (data['rating'] as num).toDouble() : null,
+      rating: data['rating'] is num ? (data['rating'] as num).toDouble() : null,
       review: data['review'],
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
@@ -72,7 +71,9 @@ class BarberQueue extends Equatable {
       'servicePrice': servicePrice,
       'bookingTime': Timestamp.fromDate(bookingTime),
       'status': status,
-      'completedAt': completedAt != null ? Timestamp.fromDate(completedAt!) : null,
+      'completedAt': completedAt != null
+          ? Timestamp.fromDate(completedAt!)
+          : null,
       'rating': rating,
       'review': review,
       'createdAt': Timestamp.fromDate(createdAt),
@@ -118,20 +119,20 @@ class BarberQueue extends Equatable {
 
   @override
   List<Object?> get props => [
-        queueId,
-        barberId,
-        shopId,
-        customerId,
-        customerName,
-        customerPhone,
-        serviceType,
-        servicePrice,
-        bookingTime,
-        status,
-        completedAt,
-        rating,
-        review,
-        createdAt,
-        updatedAt,
-      ];
+    queueId,
+    barberId,
+    shopId,
+    customerId,
+    customerName,
+    customerPhone,
+    serviceType,
+    servicePrice,
+    bookingTime,
+    status,
+    completedAt,
+    rating,
+    review,
+    createdAt,
+    updatedAt,
+  ];
 }

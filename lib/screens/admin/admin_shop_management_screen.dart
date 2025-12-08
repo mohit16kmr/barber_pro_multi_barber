@@ -121,7 +121,9 @@ class _AdminShopManagementScreenState extends State<AdminShopManagementScreen> {
                   child: ElevatedButton.icon(
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Shop information updated')),
+                        const SnackBar(
+                          content: Text('Shop information updated'),
+                        ),
                       );
                     },
                     icon: const Icon(Icons.save),
@@ -154,7 +156,10 @@ class _AdminShopManagementScreenState extends State<AdminShopManagementScreen> {
                   children: [
                     const Text(
                       'Manage Barbers',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     ElevatedButton.icon(
                       onPressed: _showAddBarberDialog,
@@ -181,7 +186,9 @@ class _AdminShopManagementScreenState extends State<AdminShopManagementScreen> {
                         direction: DismissDirection.endToStart,
                         onDismissed: (_) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('${barber.ownerName} removed')),
+                            SnackBar(
+                              content: Text('${barber.ownerName} removed'),
+                            ),
                           );
                         },
                         background: Container(
@@ -263,7 +270,9 @@ class _AdminShopManagementScreenState extends State<AdminShopManagementScreen> {
               icon: Icons.schedule,
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Business hours editor coming soon')),
+                  const SnackBar(
+                    content: Text('Business hours editor coming soon'),
+                  ),
                 );
               },
             ),
@@ -273,7 +282,9 @@ class _AdminShopManagementScreenState extends State<AdminShopManagementScreen> {
               icon: Icons.category,
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Service categories editor coming soon')),
+                  const SnackBar(
+                    content: Text('Service categories editor coming soon'),
+                  ),
                 );
               },
             ),
@@ -283,7 +294,9 @@ class _AdminShopManagementScreenState extends State<AdminShopManagementScreen> {
               icon: Icons.notifications,
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Notification settings coming soon')),
+                  const SnackBar(
+                    content: Text('Notification settings coming soon'),
+                  ),
                 );
               },
             ),
@@ -326,6 +339,10 @@ class _AdminShopManagementScreenState extends State<AdminShopManagementScreen> {
   void _showAddBarberDialog() {
     final nameController = TextEditingController();
     final phoneController = TextEditingController();
+
+    final barberProvider = context.read<BarberProvider>();
+    final navigator = Navigator.of(context, rootNavigator: true);
+    final messenger = ScaffoldMessenger.of(context);
 
     showDialog(
       context: context,
@@ -371,12 +388,10 @@ class _AdminShopManagementScreenState extends State<AdminShopManagementScreen> {
                 return;
               }
 
-              final barberProvider = context.read<BarberProvider>();
               await barberProvider.addBarber(name: name, phone: phone);
 
-              if (!mounted) return;
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
+              navigator.pop();
+              messenger.showSnackBar(
                 SnackBar(content: Text('Barber "$name" added successfully')),
               );
             },

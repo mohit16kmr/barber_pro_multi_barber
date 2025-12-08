@@ -20,18 +20,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     // Show loading while auth initializes
     if (authProvider.isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (user == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) context.go('/login');
       });
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final bookingProvider = context.watch<BookingProvider>();
@@ -74,7 +70,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     user.email,
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withAlpha((0.9 * 255).round()),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -130,20 +126,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   /// Build Stats Section
-  Widget _buildStatsSection(BuildContext context, dynamic user, BookingProvider bookingProvider) {
+  Widget _buildStatsSection(
+    BuildContext context,
+    dynamic user,
+    BookingProvider bookingProvider,
+  ) {
     final totalBookings = bookingProvider.myBookings.length;
     final completedBookings = bookingProvider.getCompletedBookings().length;
-    final totalSpent = bookingProvider.getCompletedBookings()
-        .fold<double>(0.0, (sum, b) => sum + (b.totalPrice));
+    final totalSpent = bookingProvider.getCompletedBookings().fold<double>(
+      0.0,
+      (sum, b) => sum + (b.totalPrice),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Your Activity',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
         Row(
@@ -244,10 +246,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         const Text(
           'Account Information',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
         Container(
@@ -282,10 +281,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         const Text(
           'Contact Information',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
         Container(
@@ -312,10 +308,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         const Text(
           'Actions',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
         SizedBox(
@@ -354,19 +347,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.grey,
-              fontSize: 14,
-            ),
-          ),
+          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 14)),
           Text(
             value,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
           ),
         ],
       ),

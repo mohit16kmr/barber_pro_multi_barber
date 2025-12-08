@@ -65,7 +65,7 @@ class _BarberHomeScreenState extends State<BarberHomeScreen> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.blue.withOpacity(0.3),
+                    color: Colors.blue.withAlpha((0.3 * 255).round()),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -86,9 +86,12 @@ class _BarberHomeScreenState extends State<BarberHomeScreen> {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.8),
+                          color: Colors.green.withAlpha((0.8 * 255).round()),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: const Row(
@@ -109,10 +112,7 @@ class _BarberHomeScreenState extends State<BarberHomeScreen> {
                       const SizedBox(width: 12),
                       const Text(
                         'Ready to serve customers',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white70,
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.white70),
                       ),
                     ],
                   ),
@@ -129,10 +129,7 @@ class _BarberHomeScreenState extends State<BarberHomeScreen> {
                   const SizedBox(height: 8),
                   const Text(
                     'Today\'s Metrics',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
                   Row(
@@ -150,7 +147,8 @@ class _BarberHomeScreenState extends State<BarberHomeScreen> {
                         child: _buildMetricCard(
                           icon: Icons.currency_rupee,
                           title: 'Daily Earnings',
-                          value: '₹${(barberProvider.currentBarberIncome?.dailyEarnings ?? 0).toStringAsFixed(0)}',
+                          value:
+                              '₹${(barberProvider.currentBarberIncome?.dailyEarnings ?? 0).toStringAsFixed(0)}',
                           color: Colors.green,
                         ),
                       ),
@@ -163,7 +161,8 @@ class _BarberHomeScreenState extends State<BarberHomeScreen> {
                         child: _buildMetricCard(
                           icon: Icons.check_circle,
                           title: 'Completed Today',
-                          value: '${barberProvider.currentBarberIncome?.totalBookings ?? 0}',
+                          value:
+                              '${barberProvider.currentBarberIncome?.totalBookings ?? 0}',
                           color: Colors.blue,
                         ),
                       ),
@@ -172,7 +171,8 @@ class _BarberHomeScreenState extends State<BarberHomeScreen> {
                         child: _buildMetricCard(
                           icon: Icons.star,
                           title: 'Rating',
-                          value: '${(barberProvider.selectedBarber?.rating ?? 0.0).toStringAsFixed(1)} ⭐',
+                          value:
+                              '${(barberProvider.selectedBarber?.rating ?? 0.0).toStringAsFixed(1)} ⭐',
                           color: Colors.amber,
                         ),
                       ),
@@ -190,16 +190,14 @@ class _BarberHomeScreenState extends State<BarberHomeScreen> {
                 children: [
                   const Text(
                     'Quick Actions',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
                   _buildActionButton(
                     icon: Icons.queue,
                     title: 'Customer Queue',
-                    subtitle: '${barberProvider.currentBarberQueue.length} customers waiting',
+                    subtitle:
+                        '${barberProvider.currentBarberQueue.length} customers waiting',
                     onTap: () => context.go('/barber-queue'),
                     color: Colors.orange,
                   ),
@@ -250,12 +248,12 @@ class _BarberHomeScreenState extends State<BarberHomeScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: color.withOpacity(0.2),
+          color: color.withAlpha((0.2 * 255).round()),
           width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withAlpha((0.1 * 255).round()),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -267,7 +265,7 @@ class _BarberHomeScreenState extends State<BarberHomeScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
+              color: color.withAlpha((0.15 * 255).round()),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: color, size: 24),
@@ -308,7 +306,7 @@ class _BarberHomeScreenState extends State<BarberHomeScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withAlpha((0.1 * 255).round()),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -319,24 +317,18 @@ class _BarberHomeScreenState extends State<BarberHomeScreen> {
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
+            color: color.withAlpha((0.15 * 255).round()),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, color: color, size: 24),
         ),
         title: Text(
           title,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 15,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
         ),
         subtitle: Text(
           subtitle,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
+          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
         ),
         trailing: Icon(Icons.arrow_forward_ios, size: 16, color: color),
         onTap: onTap,

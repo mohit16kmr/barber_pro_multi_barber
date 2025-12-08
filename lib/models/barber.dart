@@ -9,7 +9,8 @@ class Barber extends Equatable {
   final String ownerName;
   final String phone;
   final String address;
-  final Map<String, dynamic>? location; // {latitude, longitude} or manual location
+  final Map<String, dynamic>?
+  location; // {latitude, longitude} or manual location
   final List<Service> services;
   final List<String> photos;
   final List<Map<String, dynamic>> queue; // List of booking tokens
@@ -24,7 +25,9 @@ class Barber extends Equatable {
   final bool verified;
   final double totalEarnings;
   final DateTime createdAt;
-  final Map<String, dynamic>? workingHours; // {monday: {open: '09:00', close: '18:00'}, ...}
+  final Map<String, dynamic>?
+  workingHours; // {monday: {open: '09:00', close: '18:00'}, ...}
+  final Map<String, dynamic>? region; // {state, district, block, town, village}
 
   const Barber({
     required this.barberId,
@@ -48,6 +51,7 @@ class Barber extends Equatable {
     this.totalEarnings = 0.0,
     required this.createdAt,
     this.workingHours,
+    this.region,
   });
 
   factory Barber.fromFirestore(DocumentSnapshot doc) {
@@ -60,7 +64,8 @@ class Barber extends Equatable {
       address: data['address'] ?? '',
       shopId: data['shopId'],
       location: data['location'],
-      services: (data['services'] as List<dynamic>?)
+      services:
+          (data['services'] as List<dynamic>?)
               ?.map((s) => Service.fromJson(s as Map<String, dynamic>))
               .toList() ??
           [],
@@ -70,9 +75,9 @@ class Barber extends Equatable {
       queueLength: data['queueLength'] ?? 0,
       referralCode: data['referralCode'],
       isOnline: data['isOnline'] ?? false,
-      breakTimes:
-          List<Map<String, dynamic>>.from(data['breakTimes'] ?? []),
-      holidays: (data['holidays'] as List<dynamic>?)
+      breakTimes: List<Map<String, dynamic>>.from(data['breakTimes'] ?? []),
+      holidays:
+          (data['holidays'] as List<dynamic>?)
               ?.map((h) => (h as Timestamp).toDate())
               .toList() ??
           [],
@@ -81,6 +86,7 @@ class Barber extends Equatable {
       totalEarnings: (data['totalEarnings'] ?? 0.0).toDouble(),
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       workingHours: data['workingHours'],
+      region: data['region'] as Map<String, dynamic>?,
     );
   }
 
@@ -106,6 +112,7 @@ class Barber extends Equatable {
       'totalEarnings': totalEarnings,
       'createdAt': Timestamp.fromDate(createdAt),
       'workingHours': workingHours,
+      'region': region,
     };
   }
 
@@ -131,6 +138,7 @@ class Barber extends Equatable {
     double? totalEarnings,
     DateTime? createdAt,
     Map<String, dynamic>? workingHours,
+    Map<String, dynamic>? region,
   }) {
     return Barber(
       barberId: barberId ?? this.barberId,
@@ -154,31 +162,33 @@ class Barber extends Equatable {
       totalEarnings: totalEarnings ?? this.totalEarnings,
       createdAt: createdAt ?? this.createdAt,
       workingHours: workingHours ?? this.workingHours,
+      region: region ?? this.region,
     );
   }
 
   @override
   List<Object?> get props => [
-        barberId,
-        shopName,
-        shopId,
-        ownerName,
-        phone,
-        address,
-        location,
-        services,
-        photos,
-        queue,
-        currentToken,
-        queueLength,
-        referralCode,
-        isOnline,
-        breakTimes,
-        holidays,
-        rating,
-        verified,
-        totalEarnings,
-        createdAt,
-        workingHours,
-      ];
+    barberId,
+    shopName,
+    shopId,
+    ownerName,
+    phone,
+    address,
+    location,
+    services,
+    photos,
+    queue,
+    currentToken,
+    queueLength,
+    referralCode,
+    isOnline,
+    breakTimes,
+    holidays,
+    rating,
+    verified,
+    totalEarnings,
+    createdAt,
+    workingHours,
+    region,
+  ];
 }

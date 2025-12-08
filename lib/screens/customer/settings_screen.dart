@@ -58,10 +58,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             // App Settings Section
             const Text(
               'App Settings',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             Card(
@@ -119,10 +116,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             // Account Settings Section
             const Text(
               'Account Settings',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             Card(
@@ -218,8 +212,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       style: TextStyle(color: Colors.orange),
                     ),
                     subtitle: const Text('Sign out from your account'),
-                    trailing: const Icon(Icons.arrow_forward_ios,
-                        size: 16, color: Colors.orange),
+                    trailing: const Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: Colors.orange,
+                    ),
                     onTap: () {
                       _showLogoutDialog(context);
                     },
@@ -232,8 +229,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       style: TextStyle(color: Colors.red),
                     ),
                     subtitle: const Text('Permanently delete your account'),
-                    trailing: const Icon(Icons.arrow_forward_ios,
-                        size: 16, color: Colors.red),
+                    trailing: const Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: Colors.red,
+                    ),
                     onTap: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -257,25 +257,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Select Language'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: ['English', 'Spanish', 'French', 'German', 'Hindi']
-              .map((lang) => RadioListTile(
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: ['English', 'Spanish', 'French', 'German', 'Hindi']
+                .map(
+                  (lang) => ListTile(
                     title: Text(lang),
-                    value: lang,
-                    groupValue: _selectedLanguage,
-                    onChanged: (value) async {
-                      setState(() => _selectedLanguage = value!);
-                      await themeProvider.setLanguage(value!);
-                      if (context.mounted) {
-                        Navigator.of(context, rootNavigator: true).pop();
-                        ScaffoldMessenger.of(context).showSnackBar(
+                    trailing: _selectedLanguage == lang
+                        ? const Icon(Icons.check, color: Colors.blue)
+                        : null,
+                    onTap: () async {
+                      setState(() => _selectedLanguage = lang);
+                      // Capture navigator and messenger before awaiting
+                      final navigator = Navigator.of(
+                        context,
+                        rootNavigator: true,
+                      );
+                      final messenger = ScaffoldMessenger.of(context);
+                      await themeProvider.setLanguage(lang);
+                      if (mounted) {
+                        navigator.pop();
+                        messenger.showSnackBar(
                           SnackBar(content: Text('Language changed to $lang')),
                         );
                       }
                     },
-                  ))
-              .toList(),
+                  ),
+                )
+                .toList(),
+          ),
         ),
       ),
     );
@@ -315,7 +326,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout from your account?'),
+        content: const Text(
+          'Are you sure you want to logout from your account?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context, rootNavigator: true).pop(),

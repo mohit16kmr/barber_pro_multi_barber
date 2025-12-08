@@ -61,14 +61,15 @@ class UserService implements BaseUserService {
         .doc(userId)
         .snapshots()
         .map((doc) {
-      if (!doc.exists) {
-        _logger.w('User $userId not found in stream');
-        return null;
-      }
-      return User.fromFirestore(doc);
-    }).handleError((error) {
-      _logger.e('Error in user stream: $error');
-    });
+          if (!doc.exists) {
+            _logger.w('User $userId not found in stream');
+            return null;
+          }
+          return User.fromFirestore(doc);
+        })
+        .handleError((error) {
+          _logger.e('Error in user stream: $error');
+        });
   }
 
   /// Update user's favorite barbers
@@ -81,17 +82,20 @@ class UserService implements BaseUserService {
           .collection(AppConstants.usersCollection)
           .doc(userId);
 
-      await userDoc.update({
-        'favoriteBarbers': FieldValue.arrayUnion([barberId])
-      }).then((_) {
-        _logger.i('Added $barberId to favorites');
-      }).catchError((_) async {
-        // If arrayUnion fails, try arrayRemove
-        await userDoc.update({
-          'favoriteBarbers': FieldValue.arrayRemove([barberId])
-        });
-        _logger.i('Removed $barberId from favorites');
-      });
+      await userDoc
+          .update({
+            'favoriteBarbers': FieldValue.arrayUnion([barberId]),
+          })
+          .then((_) {
+            _logger.i('Added $barberId to favorites');
+          })
+          .catchError((_) async {
+            // If arrayUnion fails, try arrayRemove
+            await userDoc.update({
+              'favoriteBarbers': FieldValue.arrayRemove([barberId]),
+            });
+            _logger.i('Removed $barberId from favorites');
+          });
     } catch (e) {
       _logger.e('Error toggling favorite barber: $e');
       rethrow;
@@ -107,9 +111,7 @@ class UserService implements BaseUserService {
       await _firestore
           .collection(AppConstants.usersCollection)
           .doc(userId)
-          .update({
-        'lastLogin': Timestamp.now(),
-      });
+          .update({'lastLogin': Timestamp.now()});
 
       _logger.i('Last login updated for user $userId');
     } catch (e) {
@@ -160,8 +162,9 @@ class UserService implements BaseUserService {
     try {
       _logger.i('Fetching all users');
 
-      final querySnapshot =
-          await _firestore.collection(AppConstants.usersCollection).get();
+      final querySnapshot = await _firestore
+          .collection(AppConstants.usersCollection)
+          .get();
 
       final users = querySnapshot.docs
           .map((doc) => User.fromFirestore(doc))
@@ -208,10 +211,7 @@ class UserService implements BaseUserService {
       await _firestore
           .collection(AppConstants.usersCollection)
           .doc(userId)
-          .update({
-        'userType': newRole,
-        'updatedAt': Timestamp.now(),
-      });
+          .update({'userType': newRole, 'updatedAt': Timestamp.now()});
 
       _logger.i('User role switched successfully');
     } catch (e) {

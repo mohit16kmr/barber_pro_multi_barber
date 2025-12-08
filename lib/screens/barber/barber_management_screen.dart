@@ -106,19 +106,29 @@ class _BarberManagementScreenState extends State<BarberManagementScreen> {
 
               final barberProvider = context.read<BarberProvider>();
               final authProvider = context.read<AuthProvider>();
-              final shopId = authProvider.currentUser?.shopId ?? authProvider.currentUser?.uid;
+              final shopId =
+                  authProvider.currentUser?.shopId ??
+                  authProvider.currentUser?.uid;
 
               // Show a small loading indicator while adding
               showDialog(
                 context: context,
                 barrierDismissible: false,
-                builder: (_) => const Center(child: CircularProgressIndicator()),
+                builder: (_) =>
+                    const Center(child: CircularProgressIndicator()),
               );
 
-              final createdId = await barberProvider.addBarber(name: name, phone: phone, shopId: shopId);
+              final createdId = await barberProvider.addBarber(
+                name: name,
+                phone: phone,
+                shopId: shopId,
+              );
 
               if (!mounted) return;
-              Navigator.of(context, rootNavigator: true).pop(); // remove loading
+              Navigator.of(
+                context,
+                rootNavigator: true,
+              ).pop(); // remove loading
 
               if (createdId != null) {
                 if (!mounted) return;
@@ -133,7 +143,9 @@ class _BarberManagementScreenState extends State<BarberManagementScreen> {
               } else {
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Failed to add barber, try again')),
+                  const SnackBar(
+                    content: Text('Failed to add barber, try again'),
+                  ),
                 );
               }
             },
@@ -143,8 +155,6 @@ class _BarberManagementScreenState extends State<BarberManagementScreen> {
       ),
     );
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -182,104 +192,118 @@ class _BarberManagementScreenState extends State<BarberManagementScreen> {
                       const SizedBox(height: 8),
                       Text(
                         'Tap the + button to add your first barber',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[500],
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[500]),
                       ),
                     ],
                   ),
                 )
               : Column(
-                children: [
-                  // Scroll Controls
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        IconButton.filled(
-                          onPressed: _scrollLeft,
-                          icon: const Icon(Icons.chevron_left),
-                          tooltip: 'Scroll Left',
-                        ),
-                        Text(
-                          '${barbers.length} Barbers',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
+                  children: [
+                    // Scroll Controls
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          IconButton.filled(
+                            onPressed: _scrollLeft,
+                            icon: const Icon(Icons.chevron_left),
+                            tooltip: 'Scroll Left',
                           ),
-                        ),
-                        IconButton.filled(
-                          onPressed: _scrollRight,
-                          icon: const Icon(Icons.chevron_right),
-                          tooltip: 'Scroll Right',
-                        ),
-                      ],
+                          Text(
+                            '${barbers.length} Barbers',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          IconButton.filled(
+                            onPressed: _scrollRight,
+                            icon: const Icon(Icons.chevron_right),
+                            tooltip: 'Scroll Right',
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  // Barbers List
-                  Expanded(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.all(12),
-                      controller: _scrollController,
-                      itemCount: barbers.length,
-                      itemBuilder: (ctx, idx) {
-                        final barber = barbers[idx];
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          elevation: 2,
-                          child: ListTile(
-                            title: Text(
-                              barber.ownerName,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            subtitle: StreamBuilder<List<dynamic>>(
-                              // Use the provider's queue stream to show live queue count
-                              stream: barberProvider.getBarberQueueStream(barber.barberId),
-                              builder: (context, snapshot) {
-                                final count = snapshot.data?.length ?? barber.queueLength;
-                                return Text('Queue: $count');
-                              },
-                            ),
-                            onTap: () {
-                              // Navigate to queue management for this barber using GoRouter
-                              context.push('/queue-management/${barber.barberId}');
-                            },
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // Active/Inactive switch - only visible to shop owner
-                                Consumer2<AuthProvider, BarberProvider>(
-                                  builder: (context, authProvider, barberProvider, _) {
-                                    final isShopOwner = authProvider.currentUser?.shopId != null;
-                                    final isOnline = barber.isOnline;
-                                    
-                                    return Switch(
-                                      value: isOnline,
-                                      activeThumbColor: Colors.green,
-                                      onChanged: isShopOwner
-                                          ? (val) async {
-                                              try {
-                                                await barberProvider.toggleBarberOnlineStatus(barber.barberId, val);
-                                              } catch (_) {
-                                                // ignore errors for mock flow
-                                              }
-                                            }
-                                          : null, // Disabled for non-owners
-                                    );
-                                  },
+                    // Barbers List
+                    Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(12),
+                        controller: _scrollController,
+                        itemCount: barbers.length,
+                        itemBuilder: (ctx, idx) {
+                          final barber = barbers[idx];
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            elevation: 2,
+                            child: ListTile(
+                              title: Text(
+                                barber.ownerName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                const SizedBox(width: 8),
-                                const Icon(Icons.chevron_right),
-                              ],
+                              ),
+                              subtitle: StreamBuilder<List<dynamic>>(
+                                // Use the provider's queue stream to show live queue count
+                                stream: barberProvider.getBarberQueueStream(
+                                  barber.barberId,
+                                ),
+                                builder: (context, snapshot) {
+                                  final count =
+                                      snapshot.data?.length ??
+                                      barber.queueLength;
+                                  return Text('Queue: $count');
+                                },
+                              ),
+                              onTap: () {
+                                // Navigate to queue management for this barber using GoRouter
+                                context.push(
+                                  '/queue-management/${barber.barberId}',
+                                );
+                              },
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Active/Inactive switch - only visible to shop owner
+                                  Consumer2<AuthProvider, BarberProvider>(
+                                    builder: (context, authProvider, barberProvider, _) {
+                                      final isShopOwner =
+                                          authProvider.currentUser?.shopId !=
+                                          null;
+                                      final isOnline = barber.isOnline;
+
+                                      return Switch(
+                                        value: isOnline,
+                                        activeThumbColor: Colors.green,
+                                        onChanged: isShopOwner
+                                            ? (val) async {
+                                                try {
+                                                  await barberProvider
+                                                      .toggleBarberOnlineStatus(
+                                                        barber.barberId,
+                                                        val,
+                                                      );
+                                                } catch (_) {
+                                                  // ignore errors for mock flow
+                                                }
+                                              }
+                                            : null, // Disabled for non-owners
+                                      );
+                                    },
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Icon(Icons.chevron_right),
+                                ],
+                              ),
                             ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                ],
+                  ],
                 );
         },
       ),

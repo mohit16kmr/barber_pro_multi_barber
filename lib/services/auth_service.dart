@@ -7,11 +7,13 @@ import 'auth_service_base.dart';
 
 /// Authentication Service for handling Firebase Auth operations
 class AuthService implements BaseAuthService {
-  final firebase_auth.FirebaseAuth _firebaseAuth = firebase_auth.FirebaseAuth.instance;
+  final firebase_auth.FirebaseAuth _firebaseAuth =
+      firebase_auth.FirebaseAuth.instance;
   // Initialize GoogleSignIn with proper scopes and server client ID for OAuth
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
-    serverClientId: '612832799916-62rrkmddvjr6k9n482f89i5cm3g6khs9.apps.googleusercontent.com',
+    serverClientId:
+        '612832799916-62rrkmddvjr6k9n482f89i5cm3g6khs9.apps.googleusercontent.com',
   );
   final Logger _logger = Logger();
 
@@ -21,7 +23,8 @@ class AuthService implements BaseAuthService {
 
   // Listen to auth state changes
   @override
-  Stream<firebase_auth.User?> get authStateChanges => _firebaseAuth.authStateChanges();
+  Stream<firebase_auth.User?> get authStateChanges =>
+      _firebaseAuth.authStateChanges();
 
   // Get current user ID
   @override
@@ -34,13 +37,16 @@ class AuthService implements BaseAuthService {
   Future<User?> signInWithGoogle({required String userType}) async {
     try {
       _logger.i('Starting Google Sign-In for userType: $userType');
-      _logger.d('GoogleSignIn configuration: scopes=[email, profile], serverClientId configured');
+      _logger.d(
+        'GoogleSignIn configuration: scopes=[email, profile], serverClientId configured',
+      );
 
       // Use a fresh GoogleSignIn instance for each sign-in attempt to avoid
       // reusing cached/native state that may cause platform-channel mismatches.
       final GoogleSignIn googleSignIn = GoogleSignIn(
         scopes: ['email', 'profile'],
-        serverClientId: '612832799916-62rrkmddvjr6k9n482f89i5cm3g6khs9.apps.googleusercontent.com',
+        serverClientId:
+            '612832799916-62rrkmddvjr6k9n482f89i5cm3g6khs9.apps.googleusercontent.com',
       );
 
       GoogleSignInAccount? googleUser;
@@ -60,9 +66,13 @@ class AuthService implements BaseAuthService {
           try {
             try {
               await googleSignIn.disconnect();
-              _logger.i('Disconnected local GoogleSignIn instance, retrying...');
+              _logger.i(
+                'Disconnected local GoogleSignIn instance, retrying...',
+              );
             } catch (disconnectErr) {
-              _logger.w('Local GoogleSignIn.disconnect() failed during recovery: $disconnectErr');
+              _logger.w(
+                'Local GoogleSignIn.disconnect() failed during recovery: $disconnectErr',
+              );
             }
             googleUser = await googleSignIn.signIn();
             _logger.d('Retry successful. googleUser=$googleUser');
@@ -89,10 +99,11 @@ class AuthService implements BaseAuthService {
 
       _logger.d('Got authentication tokens. Creating Firebase credential...');
 
-      final firebase_auth.OAuthCredential credential = firebase_auth.GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
+      final firebase_auth.OAuthCredential credential =
+          firebase_auth.GoogleAuthProvider.credential(
+            accessToken: googleAuth.accessToken,
+            idToken: googleAuth.idToken,
+          );
 
       _logger.d('Signing in to Firebase with OAuth credential...');
 
@@ -100,11 +111,13 @@ class AuthService implements BaseAuthService {
       int attempt = 0;
       const int maxAttempts = 3;
       dynamic lastError;
-      
+
       while (attempt < maxAttempts) {
         attempt++;
         try {
-          _logger.d('=== PAYLOAD CAPTURE: About to call signInWithCredential (attempt $attempt/$maxAttempts) ===');
+          _logger.d(
+            '=== PAYLOAD CAPTURE: About to call signInWithCredential (attempt $attempt/$maxAttempts) ===',
+          );
           _logger.d('Credential type: ${credential.runtimeType}');
           userCredential = await _firebaseAuth.signInWithCredential(credential);
           _logger.d('=== PAYLOAD CAPTURE: signInWithCredential succeeded ===');
@@ -112,29 +125,42 @@ class AuthService implements BaseAuthService {
           break; // Success, exit loop
         } catch (e) {
           lastError = e;
-          _logger.e('=== PAYLOAD CAPTURE: Error during signInWithCredential (attempt $attempt) ===');
+          _logger.e(
+            '=== PAYLOAD CAPTURE: Error during signInWithCredential (attempt $attempt) ===',
+          );
           _logger.e('Error type: ${e.runtimeType}');
           _logger.e('Error toString: $e');
           if (e is TypeError) {
             _logger.e('TypeError details: ${e.toString()}');
             _logger.e('TypeError stackTrace: ${e.stackTrace}');
           }
-          
+
           // If Pigeon error and not last attempt, wait briefly then retry
-          if ((e.toString().contains('Pigeon') || e.toString().contains("type 'List<Object?>") || e.toString().contains('is not a subtype')) && attempt < maxAttempts) {
-            _logger.w('Detected Pigeon cast error; retrying after brief delay...');
-            await Future.delayed(Duration(milliseconds: 500 * attempt)); // Exponential backoff
+          if ((e.toString().contains('Pigeon') ||
+                  e.toString().contains("type 'List<Object?>") ||
+                  e.toString().contains('is not a subtype')) &&
+              attempt < maxAttempts) {
+            _logger.w(
+              'Detected Pigeon cast error; retrying after brief delay...',
+            );
+            await Future.delayed(
+              Duration(milliseconds: 500 * attempt),
+            ); // Exponential backoff
             continue; // Retry
           }
           // If different error, rethrow immediately
-          if (!e.toString().contains('Pigeon') && !e.toString().contains("type 'List<Object?>") && !e.toString().contains('is not a subtype')) {
+          if (!e.toString().contains('Pigeon') &&
+              !e.toString().contains("type 'List<Object?>") &&
+              !e.toString().contains('is not a subtype')) {
             rethrow;
           }
         }
       }
-      
+
       if (lastError != null && attempt >= maxAttempts) {
-        _logger.e('All credential sign-in attempts failed after $maxAttempts tries');
+        _logger.e(
+          'All credential sign-in attempts failed after $maxAttempts tries',
+        );
         throw lastError;
       }
 
@@ -159,7 +185,9 @@ class AuthService implements BaseAuthService {
         lastLogin: DateTime.now(),
       );
     } on firebase_auth.FirebaseAuthException catch (e) {
-      _logger.e('Firebase Auth Exception during Google Sign-In: ${e.code} - ${e.message}');
+      _logger.e(
+        'Firebase Auth Exception during Google Sign-In: ${e.code} - ${e.message}',
+      );
       rethrow;
     } catch (e) {
       _logger.e('Error during Google Sign-In: $e');
@@ -177,10 +205,13 @@ class AuthService implements BaseAuthService {
     try {
       _logger.i('Starting email/password sign-in for: $email');
 
-      final firebase_auth.UserCredential userCredential =
-          await _firebaseAuth.signInWithCredential(
-        firebase_auth.EmailAuthProvider.credential(email: email, password: password),
-      );
+      final firebase_auth.UserCredential userCredential = await _firebaseAuth
+          .signInWithCredential(
+            firebase_auth.EmailAuthProvider.credential(
+              email: email,
+              password: password,
+            ),
+          );
 
       final firebaseUser = userCredential.user;
       if (firebaseUser == null) {
@@ -200,7 +231,9 @@ class AuthService implements BaseAuthService {
         lastLogin: DateTime.now(),
       );
     } on firebase_auth.FirebaseAuthException catch (e) {
-      _logger.e('Firebase Auth Exception during email/password sign-in: ${e.code} - ${e.message}');
+      _logger.e(
+        'Firebase Auth Exception during email/password sign-in: ${e.code} - ${e.message}',
+      );
       rethrow;
     } catch (e) {
       _logger.e('Error during email/password sign-in: $e');
@@ -218,11 +251,8 @@ class AuthService implements BaseAuthService {
     try {
       _logger.i('Creating admin account for: $email');
 
-      final firebase_auth.UserCredential userCredential =
-          await _firebaseAuth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      final firebase_auth.UserCredential userCredential = await _firebaseAuth
+          .createUserWithEmailAndPassword(email: email, password: password);
 
       final firebaseUser = userCredential.user;
       if (firebaseUser == null) {
@@ -241,7 +271,9 @@ class AuthService implements BaseAuthService {
         lastLogin: DateTime.now(),
       );
     } on firebase_auth.FirebaseAuthException catch (e) {
-      _logger.e('Firebase Auth Exception during admin creation: ${e.code} - ${e.message}');
+      _logger.e(
+        'Firebase Auth Exception during admin creation: ${e.code} - ${e.message}',
+      );
       rethrow;
     } catch (e) {
       _logger.e('Error creating admin account: $e');
@@ -263,7 +295,9 @@ class AuthService implements BaseAuthService {
 
       _logger.i('User profile updated successfully');
     } on firebase_auth.FirebaseAuthException catch (e) {
-      _logger.e('Firebase Auth Exception updating profile: ${e.code} - ${e.message}');
+      _logger.e(
+        'Firebase Auth Exception updating profile: ${e.code} - ${e.message}',
+      );
       rethrow;
     } catch (e) {
       _logger.e('Error updating user profile: $e');
@@ -320,7 +354,9 @@ class AuthService implements BaseAuthService {
       await _firebaseAuth.currentUser?.sendEmailVerification();
       _logger.i('Email verification sent');
     } on firebase_auth.FirebaseAuthException catch (e) {
-      _logger.e('Firebase Auth Exception sending email verification: ${e.code} - ${e.message}');
+      _logger.e(
+        'Firebase Auth Exception sending email verification: ${e.code} - ${e.message}',
+      );
       rethrow;
     }
   }
@@ -332,7 +368,9 @@ class AuthService implements BaseAuthService {
       await _firebaseAuth.sendPasswordResetEmail(email: email);
       _logger.i('Password reset email sent');
     } on firebase_auth.FirebaseAuthException catch (e) {
-      _logger.e('Firebase Auth Exception sending password reset: ${e.code} - ${e.message}');
+      _logger.e(
+        'Firebase Auth Exception sending password reset: ${e.code} - ${e.message}',
+      );
       rethrow;
     }
   }
@@ -346,16 +384,15 @@ class AuthService implements BaseAuthService {
     try {
       _logger.i('Logging in with email: $email');
 
-      final firebase_auth.UserCredential userCredential =
-          await _firebaseAuth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      final firebase_auth.UserCredential userCredential = await _firebaseAuth
+          .signInWithEmailAndPassword(email: email, password: password);
 
       _logger.i('Login successful for: $email');
       return userCredential.user;
     } on firebase_auth.FirebaseAuthException catch (e) {
-      _logger.e('Firebase Auth Exception during login: ${e.code} - ${e.message}');
+      _logger.e(
+        'Firebase Auth Exception during login: ${e.code} - ${e.message}',
+      );
       rethrow;
     }
   }
@@ -369,16 +406,15 @@ class AuthService implements BaseAuthService {
     try {
       _logger.i('Signing up new user with email: $email');
 
-      final firebase_auth.UserCredential userCredential =
-          await _firebaseAuth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      final firebase_auth.UserCredential userCredential = await _firebaseAuth
+          .createUserWithEmailAndPassword(email: email, password: password);
 
       _logger.i('Signup successful for: $email');
       return userCredential.user;
     } on firebase_auth.FirebaseAuthException catch (e) {
-      _logger.e('Firebase Auth Exception during signup: ${e.code} - ${e.message}');
+      _logger.e(
+        'Firebase Auth Exception during signup: ${e.code} - ${e.message}',
+      );
       rethrow;
     }
   }
@@ -391,7 +427,9 @@ class AuthService implements BaseAuthService {
       await _firebaseAuth.sendPasswordResetEmail(email: email);
       _logger.i('Password reset email sent to: $email');
     } on firebase_auth.FirebaseAuthException catch (e) {
-      _logger.e('Firebase Auth Exception during password reset: ${e.code} - ${e.message}');
+      _logger.e(
+        'Firebase Auth Exception during password reset: ${e.code} - ${e.message}',
+      );
       rethrow;
     }
   }
@@ -404,7 +442,9 @@ class AuthService implements BaseAuthService {
       await _firebaseAuth.currentUser?.delete();
       _logger.i('User account deleted');
     } on firebase_auth.FirebaseAuthException catch (e) {
-      _logger.e('Firebase Auth Exception deleting account: ${e.code} - ${e.message}');
+      _logger.e(
+        'Firebase Auth Exception deleting account: ${e.code} - ${e.message}',
+      );
       rethrow;
     }
   }

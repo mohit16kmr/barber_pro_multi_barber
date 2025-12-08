@@ -6,6 +6,7 @@ import '../models/barber_queue.dart';
 import '../models/barber_income.dart';
 import '../models/barber_shift.dart';
 import '../services/index.dart';
+import '../config/app_constants.dart';
 
 /// Barber Provider - manages barber-related state
 class BarberProvider extends ChangeNotifier {
@@ -22,10 +23,11 @@ class BarberProvider extends ChangeNotifier {
   String _currentFilter = 'all'; // all, least-busy, top-rated
 
   // Queue & Earnings state
-  List<BarberQueue> _currentBarberQueue = [];
+  List<dynamic> _currentBarberQueue = [];
   BarberIncome? _currentBarberIncome;
   BarberShift? _currentBarberShift;
-  final Map<String, BarberIncome> _allBarberIncomes = {}; // shopId -> list of incomes
+  final Map<String, BarberIncome> _allBarberIncomes =
+      {}; // shopId -> list of incomes
   bool _isBarberOnline = false;
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -40,7 +42,7 @@ class BarberProvider extends ChangeNotifier {
   String get currentFilter => _currentFilter;
 
   // Queue & Earnings getters
-  List<BarberQueue> get currentBarberQueue => _currentBarberQueue;
+  List<dynamic> get currentBarberQueue => _currentBarberQueue;
   BarberIncome? get currentBarberIncome => _currentBarberIncome;
   BarberShift? get currentBarberShift => _currentBarberShift;
   Map<String, BarberIncome> get allBarberIncomes => _allBarberIncomes;
@@ -49,13 +51,26 @@ class BarberProvider extends ChangeNotifier {
   /// Load all barbers
   /// Note: Loads all barbers regardless of online status.
   /// Customers can see all registered barbers and check their status.
+  /// Uses simple method to fetch directly from users collection.
+  /// Has 10-second timeout to prevent app hanging.
   Future<bool> loadAllBarbers() async {
     try {
       _setLoading(true);
       _clearError();
       _logger.i('Loading all barbers');
 
-      _allBarbers = await _barberService.getAllBarbers(onlineOnly: false);
+      // Use simple method that queries users collection directly
+      // With timeout protection
+      final Future<List<Barber>> barbersFuture = _barberService
+          .getAllBarbersSimple();
+      _allBarbers = await barbersFuture.timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          _logger.w('Barber loading timed out after 10s');
+          _setError('Barber loading took too long');
+          return [];
+        },
+      );
       _filteredBarbers = _allBarbers;
 
       _logger.i('Loaded ${_allBarbers.length} barbers');
@@ -64,6 +79,9 @@ class BarberProvider extends ChangeNotifier {
     } catch (e) {
       _logger.e('Error loading barbers: $e');
       _setError('Failed to load barbers');
+      _allBarbers = [];
+      _filteredBarbers = [];
+      notifyListeners();
       return false;
     } finally {
       _setLoading(false);
@@ -121,8 +139,7 @@ class BarberProvider extends ChangeNotifier {
       _clearError();
       _logger.i('Loading barbers for location: $location');
 
-      _filteredBarbers =
-          await _barberService.searchBarbersByLocation(location);
+      _filteredBarbers = await _barberService.searchBarbersByLocation(location);
 
       _logger.i('Loaded ${_filteredBarbers.length} barbers in location');
       notifyListeners();
@@ -158,9 +175,11 @@ class BarberProvider extends ChangeNotifier {
       _filteredBarbers = _allBarbers;
     } else {
       _filteredBarbers = _allBarbers
-          .where((barber) =>
-              barber.shopName.toLowerCase().contains(query.toLowerCase()) ||
-              barber.ownerName.toLowerCase().contains(query.toLowerCase()))
+          .where(
+            (barber) =>
+                barber.shopName.toLowerCase().contains(query.toLowerCase()) ||
+                barber.ownerName.toLowerCase().contains(query.toLowerCase()),
+          )
           .toList();
     }
 
@@ -186,8 +205,7 @@ class BarberProvider extends ChangeNotifier {
 
   /// Sort barbers by name (A-Z)
   void sortByName() {
-    _filteredBarbers
-        .sort((a, b) => a.shopName.compareTo(b.shopName));
+    _filteredBarbers.sort((a, b) => a.shopName.compareTo(b.shopName));
     _logger.i('Sorted barbers by name');
     notifyListeners();
   }
@@ -211,7 +229,16 @@ class BarberProvider extends ChangeNotifier {
   Future<Barber?> getBarberById(String barberId) async {
     try {
       _logger.i('Fetching barber: $barberId');
-      return await _barberService.getBarberById(barberId);
+      final fromBarbers = await _barberService.getBarberById(barberId);
+      if (fromBarbers != null) return fromBarbers;
+
+      // Fallback: some barbers may be stored in `users/{id}`
+      final fromUsers = await _barberService.getBarberFromUsersById(barberId);
+      if (fromUsers != null) {
+        _logger.i('Barber found in users collection as fallback: $barberId');
+        return fromUsers;
+      }
+      return null;
     } catch (e) {
       _logger.e('Error fetching barber: $e');
       return null;
@@ -279,31 +306,59 @@ class BarberProvider extends ChangeNotifier {
   /// Check if barber is on holiday
   bool isBarberOnHoliday(Barber barber) {
     final today = DateTime.now();
-    return barber.holidays.any((holiday) =>
-        holiday.year == today.year &&
-        holiday.month == today.month &&
-        holiday.day == today.day);
+    return barber.holidays.any(
+      (holiday) =>
+          holiday.year == today.year &&
+          holiday.month == today.month &&
+          holiday.day == today.day,
+    );
   }
 
   // ==================== Queue & Earnings Methods ====================
 
   /// Get current barber's queue (real-time stream)
-  Stream<List<BarberQueue>> getBarberQueueStream(String barberId) {
+  /// Now reads from 'bookings' collection (single source of truth)
+  Stream<List<dynamic>> getBarberQueueStream(String barberId) {
     _logger.i('Getting queue stream for barber: $barberId');
     return _firestore
-        .collection('barberQueue')
+        .collection(AppConstants.bookingsCollection)
         .where('barberId', isEqualTo: barberId)
-        .where('status', whereIn: ['waiting', 'serving'])
+        .where(
+          'status',
+          whereIn: [
+            AppConstants.bookingStatusWaiting,
+            AppConstants.bookingStatusNext,
+            AppConstants.bookingStatusServing,
+          ],
+        )
         .orderBy('bookingTime', descending: false)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => BarberQueue.fromFirestore(doc))
-          .toList();
-    });
+          return snapshot.docs.map((doc) {
+            final data = doc.data();
+            // Return dynamic map compatible with existing screen code
+            return {
+              'id': doc.id,
+              'queueId': doc.id,
+              'bookingId': doc.id,
+              'barberId': data['barberId'],
+              'customerId': data['customerId'],
+              'customerName': data['customerId'],
+              'customerPhone': '',
+              'serviceType': _getServiceTypesFromBooking(data),
+              'price': (data['totalPrice'] as num?)?.toDouble() ?? 0.0,
+              'status': data['status'],
+              'bookingTime': data['bookingTime'],
+              'waitTime': _formatWaitTime(data['estimatedWaitTime']),
+              'tokenNumber': data['tokenNumber'],
+              'services': data['services'],
+            };
+          }).toList();
+        });
   }
 
   /// Load barber's current queue (one-time fetch)
+  /// Now reads from 'bookings' collection (single source of truth)
   Future<bool> loadBarberQueue(String barberId) async {
     try {
       _setLoading(true);
@@ -311,16 +366,48 @@ class BarberProvider extends ChangeNotifier {
       _logger.i('Loading queue for barber: $barberId');
 
       final snapshot = await _firestore
-          .collection('barberQueue')
+          .collection(AppConstants.bookingsCollection)
           .where('barberId', isEqualTo: barberId)
-          .where('status', whereIn: ['waiting', 'serving'])
+          .where(
+            'status',
+            whereIn: [
+              AppConstants.bookingStatusWaiting,
+              AppConstants.bookingStatusNext,
+              AppConstants.bookingStatusServing,
+            ],
+          )
           .orderBy('bookingTime', descending: false)
           .get();
 
-      _currentBarberQueue =
-          snapshot.docs.map((doc) => BarberQueue.fromFirestore(doc)).toList();
+      _currentBarberQueue = snapshot.docs.map((doc) {
+        final data = doc.data();
+        try {
+          final booking = Booking.fromFirestore(doc);
+          return BarberQueue(
+            queueId: booking.bookingId,
+            barberId: booking.barberId,
+            shopId: '',
+            customerId: booking.customerId,
+            customerName: booking.customerId,
+            customerPhone: null,
+            serviceType: booking.services.isNotEmpty
+                ? booking.services.map((s) => s.name).join(', ')
+                : 'Service',
+            servicePrice: booking.totalPrice,
+            bookingTime: booking.bookingTime,
+            status: booking.status,
+            rating: booking.rating,
+            review: booking.review,
+            createdAt: booking.bookingTime,
+            updatedAt: booking.bookingTime,
+          );
+        } catch (e) {
+          _logger.w('Failed to convert to BarberQueue: $e');
+          return data;
+        }
+      }).toList();
 
-      _logger.i('Loaded ${_currentBarberQueue.length} queue items');
+      _logger.i('Loaded ${_currentBarberQueue.length} queue items from bookings');
       notifyListeners();
       return true;
     } catch (e) {
@@ -332,19 +419,45 @@ class BarberProvider extends ChangeNotifier {
     }
   }
 
+  /// Helper: Format estimated wait time
+  String _formatWaitTime(dynamic waitTime) {
+    if (waitTime is int) {
+      return '$waitTime min';
+    }
+    return '-- min';
+  }
+
+  /// Helper: Get service types from booking services list
+  String _getServiceTypesFromBooking(dynamic data) {
+    try {
+      final services = (data is Map && data.containsKey('services')) ? data['services'] : null;
+      if (services is List && services.isNotEmpty) {
+        return services.map((s) {
+          if (s is Map && s.containsKey('name')) {
+            final name = s['name'];
+            return name != null ? name.toString() : 'Service';
+          }
+          return 'Service';
+        }).join(', ');
+      }
+    } catch (e) {
+      _logger.w('Error getting service types: $e');
+    }
+    return 'Service';
+  }
+
   /// Get barber's earnings for a specific period
-  Future<BarberIncome?> getBarberIncome(
-    String barberId,
-    DateTime date,
-  ) async {
+  Future<BarberIncome?> getBarberIncome(String barberId, DateTime date) async {
     try {
       _logger.i('Fetching income for barber: $barberId on $date');
 
       final snapshot = await _firestore
           .collection('barberIncome')
           .where('barberId', isEqualTo: barberId)
-          .where('date',
-              isEqualTo: DateTime(date.year, date.month, date.day).toString())
+          .where(
+            'date',
+            isEqualTo: DateTime(date.year, date.month, date.day).toString(),
+          )
           .limit(1)
           .get();
 
@@ -353,8 +466,7 @@ class BarberProvider extends ChangeNotifier {
         return null;
       }
 
-      _currentBarberIncome =
-          BarberIncome.fromFirestore(snapshot.docs.first);
+      _currentBarberIncome = BarberIncome.fromFirestore(snapshot.docs.first);
       notifyListeners();
       return _currentBarberIncome;
     } catch (e) {
@@ -396,23 +508,22 @@ class BarberProvider extends ChangeNotifier {
   }
 
   /// Get barber's earnings stream (real-time)
-  Stream<BarberIncome?> getBarberIncomeStream(
-    String barberId,
-    DateTime date,
-  ) {
+  Stream<BarberIncome?> getBarberIncomeStream(String barberId, DateTime date) {
     _logger.i('Getting income stream for barber: $barberId');
     return _firestore
         .collection('barberIncome')
         .where('barberId', isEqualTo: barberId)
-        .where('date',
-            isEqualTo: DateTime(date.year, date.month, date.day).toString())
+        .where(
+          'date',
+          isEqualTo: DateTime(date.year, date.month, date.day).toString(),
+        )
         .snapshots()
         .map((snapshot) {
-      if (snapshot.docs.isEmpty) {
-        return null;
-      }
-      return BarberIncome.fromFirestore(snapshot.docs.first);
-    });
+          if (snapshot.docs.isEmpty) {
+            return null;
+          }
+          return BarberIncome.fromFirestore(snapshot.docs.first);
+        });
   }
 
   /// Get barber's shift status
@@ -425,9 +536,14 @@ class BarberProvider extends ChangeNotifier {
       final snapshot = await _firestore
           .collection('barberShift')
           .where('barberId', isEqualTo: barberId)
-          .where('startTime',
-              isGreaterThanOrEqualTo:
-                  DateTime(today.year, today.month, today.day).toString())
+          .where(
+            'startTime',
+            isGreaterThanOrEqualTo: DateTime(
+              today.year,
+              today.month,
+              today.day,
+            ).toString(),
+          )
           .limit(1)
           .get();
 
@@ -459,7 +575,10 @@ class BarberProvider extends ChangeNotifier {
       await _firestore
           .collection('barberShift')
           .doc(_currentBarberShift!.shiftId)
-          .update({'isOnline': isOnline, 'updatedAt': FieldValue.serverTimestamp()});
+          .update({
+            'isOnline': isOnline,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
 
       _isBarberOnline = isOnline;
       _currentBarberShift = _currentBarberShift!.copyWith(isOnline: isOnline);
@@ -475,32 +594,38 @@ class BarberProvider extends ChangeNotifier {
   }
 
   /// Complete a service (update queue and earnings)
-  Future<bool> completeService(String queueId, double amount, double rating) async {
+  Future<bool> completeService(
+    String queueId,
+    double amount,
+    double rating,
+  ) async {
     try {
       _logger.i('Completing service: $queueId');
 
-      // Update queue item
-      await _firestore.collection('barberQueue').doc(queueId).update({
-        'status': 'completed',
-        'completedAt': FieldValue.serverTimestamp(),
-        'rating': rating,
-      });
+      // Update booking item in bookings collection
+      await _firestore
+          .collection(AppConstants.bookingsCollection)
+          .doc(queueId)
+          .update({
+            'status': AppConstants.bookingStatusCompleted,
+            'completionTime': FieldValue.serverTimestamp(),
+            'rating': rating,
+            'paymentStatus': AppConstants.paymentStatusCompleted,
+          });
 
       // Update shift earnings
       if (_currentBarberShift != null) {
-        final newEarnings =
-            (_currentBarberShift!.totalEarnings) + amount;
-        final newCount =
-            (_currentBarberShift!.totalCustomersServed) + 1;
+        final newEarnings = (_currentBarberShift!.totalEarnings) + amount;
+        final newCount = (_currentBarberShift!.totalCustomersServed) + 1;
 
         await _firestore
             .collection('barberShift')
             .doc(_currentBarberShift!.shiftId)
             .update({
-          'totalEarnings': newEarnings,
-          'totalCustomersServed': newCount,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
+              'totalEarnings': newEarnings,
+              'totalCustomersServed': newCount,
+              'updatedAt': FieldValue.serverTimestamp(),
+            });
       }
 
       // Reload queue
@@ -522,10 +647,14 @@ class BarberProvider extends ChangeNotifier {
     try {
       _logger.i('Skipping customer in queue: $queueId');
 
-      await _firestore.collection('barberQueue').doc(queueId).update({
-        'bookingTime': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      // Update booking to skipped status
+      await _firestore
+          .collection(AppConstants.bookingsCollection)
+          .doc(queueId)
+          .update({
+            'status': AppConstants.bookingStatusSkipped,
+            'bookingTime': FieldValue.serverTimestamp(),
+          });
 
       // Reload queue
       if (_currentBarberShift != null) {
@@ -562,8 +691,7 @@ class BarberProvider extends ChangeNotifier {
     if (_allBarberIncomes.isEmpty) return null;
     var topBarber = _allBarberIncomes.entries.first;
     for (var entry in _allBarberIncomes.entries) {
-        if ((entry.value.dailyEarnings) >
-          (topBarber.value.dailyEarnings)) {
+      if ((entry.value.dailyEarnings) > (topBarber.value.dailyEarnings)) {
         topBarber = entry;
       }
     }
@@ -572,7 +700,6 @@ class BarberProvider extends ChangeNotifier {
 
   // ==================== End Queue & Earnings Methods ====================
 
-  
   void _setLoading(bool value) {
     _isLoading = value;
     // Defer notifications until after the current frame to avoid

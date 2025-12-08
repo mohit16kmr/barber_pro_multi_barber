@@ -10,8 +10,8 @@ class ThemeProvider extends ChangeNotifier {
   String _language;
 
   ThemeProvider._(this._prefs)
-      : _isDark = _prefs.getBool(_keyDark) ?? false,
-        _language = _prefs.getString(_keyLang) ?? 'English';
+    : _isDark = _prefs.getBool(_keyDark) ?? false,
+      _language = _prefs.getString(_keyLang) ?? 'English';
 
   static Future<ThemeProvider> create() async {
     final prefs = await SharedPreferences.getInstance();

@@ -55,6 +55,8 @@ class _SplashScreenState extends State<SplashScreen>
         // ignore errors; initializeAuth already logs
       }
 
+      if (!mounted) return;
+
       final isLoggedIn = authProvider.isAuthenticated;
       final isBarber = authProvider.userRole == 'barber';
 
@@ -93,7 +95,7 @@ class _SplashScreenState extends State<SplashScreen>
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
+                        color: Colors.black.withAlpha((0.2 * 255).round()),
                         blurRadius: 10,
                         offset: const Offset(0, 5),
                       ),

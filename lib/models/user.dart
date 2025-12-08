@@ -16,7 +16,7 @@ class User extends Equatable {
   final String? state; // State for location-based discovery
   final double? latitude; // GPS coordinates for nearby barbers
   final double? longitude;
-  
+
   // Barber-specific fields
   final String? shopId; // Shop/Salon ID this barber belongs to
   final String? referralCode; // Referral code (if applicable)
@@ -68,10 +68,14 @@ class User extends Equatable {
       photoUrl: data['photoUrl'],
       city: data['city'],
       state: data['state'],
-      latitude: data['latitude'] is num ? (data['latitude'] as num).toDouble() : null,
-      longitude: data['longitude'] is num ? (data['longitude'] as num).toDouble() : null,
+      latitude: data['latitude'] is num
+          ? (data['latitude'] as num).toDouble()
+          : null,
+      longitude: data['longitude'] is num
+          ? (data['longitude'] as num).toDouble()
+          : null,
       shopId: data['shopId'],
-        referralCode: data['referralCode'],
+      referralCode: data['referralCode'],
       barberPhotoUrl: data['barberPhotoUrl'],
       yearsOfExperience: data['yearsOfExperience'],
       specialties: List<String>.from(data['specialties'] ?? []),
@@ -102,8 +106,12 @@ class User extends Equatable {
     if (shopId != null) data['shopId'] = shopId;
     if (referralCode != null) data['referralCode'] = referralCode;
     if (barberPhotoUrl != null) data['barberPhotoUrl'] = barberPhotoUrl;
-    if (yearsOfExperience != null) data['yearsOfExperience'] = yearsOfExperience;
-    if (specialties != null && specialties!.isNotEmpty) data['specialties'] = specialties;
+    if (yearsOfExperience != null) {
+      data['yearsOfExperience'] = yearsOfExperience;
+    }
+    if (specialties != null && specialties!.isNotEmpty) {
+      data['specialties'] = specialties;
+    }
     if (bio != null) data['bio'] = bio;
     if (rating != null) data['rating'] = rating;
     if (reviewCount != null) data['reviewCount'] = reviewCount;
@@ -161,26 +169,26 @@ class User extends Equatable {
 
   @override
   List<Object?> get props => [
-        uid,
-        email,
-        name,
-        phone,
-        userType,
-        favoriteBarbers,
-        createdAt,
-        lastLogin,
-        photoUrl,
-        city,
-        state,
-        latitude,
-        longitude,
-        shopId,
-        referralCode,
-        barberPhotoUrl,
-        yearsOfExperience,
-        specialties,
-        bio,
-        rating,
-        reviewCount,
-      ];
+    uid,
+    email,
+    name,
+    phone,
+    userType,
+    favoriteBarbers,
+    createdAt,
+    lastLogin,
+    photoUrl,
+    city,
+    state,
+    latitude,
+    longitude,
+    shopId,
+    referralCode,
+    barberPhotoUrl,
+    yearsOfExperience,
+    specialties,
+    bio,
+    rating,
+    reviewCount,
+  ];
 }

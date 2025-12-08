@@ -8,11 +8,7 @@ class AppShell extends StatefulWidget {
   final Widget child;
   final String userType; // 'customer' or 'barber'
 
-  const AppShell({
-    required this.child,
-    required this.userType,
-    super.key,
-  });
+  const AppShell({required this.child, required this.userType, super.key});
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -24,7 +20,8 @@ class _AppShellState extends State<AppShell> {
     if (widget.userType == 'customer') {
       if (location.startsWith('/home')) return 0;
       if (location.startsWith('/discovery')) return 1;
-      if (location.startsWith('/bookings')) return 2; // Fixed: only /bookings maps to 2
+      if (location.startsWith('/bookings'))
+        return 2; // ignore: curly_braces_in_flow_control_structures // Fixed: only /bookings maps to 2
       if (location.startsWith('/profile') ||
           location.startsWith('/edit-profile')) {
         return 3;
@@ -41,7 +38,8 @@ class _AppShellState extends State<AppShell> {
       if (location.startsWith('/barber-earnings')) {
         return 2; // Earnings tab
       }
-      if (location.startsWith('/barber-profile') || location.startsWith('/barber-settings')) {
+      if (location.startsWith('/barber-profile') ||
+          location.startsWith('/barber-settings')) {
         return 3; // Profile tab
       }
     } else if (widget.userType == 'admin') {
@@ -72,10 +70,14 @@ class _AppShellState extends State<AppShell> {
           context.go('/discovery');
           break;
         case 2:
-          context.go('/bookings'); // Fixed: was '/profile', should be '/bookings'
+          context.go(
+            '/bookings',
+          ); // Fixed: was '/profile', should be '/bookings'
           break;
         case 3:
-          context.go('/profile'); // Fixed: was '/settings', should be '/profile'
+          context.go(
+            '/profile',
+          ); // Fixed: was '/settings', should be '/profile'
           break;
       }
     } else if (widget.userType == 'barber') {
@@ -120,7 +122,7 @@ class _AppShellState extends State<AppShell> {
 
     return PopScope(
       canPop: true,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         // Let go_router handle the back navigation
         if (didPop) return;
         context.pop();
@@ -191,22 +193,10 @@ class _AppShellState extends State<AppShell> {
         onTap: _onNavItemTapped,
         type: BottomNavigationBarType.fixed,
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Discover',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.receipt),
-            label: 'Bookings',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Discover'),
+          BottomNavigationBarItem(icon: Icon(Icons.receipt), label: 'Bookings'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       );
     } else if (widget.userType == 'barber') {
@@ -216,22 +206,13 @@ class _AppShellState extends State<AppShell> {
         onTap: _onNavItemTapped,
         type: BottomNavigationBarType.fixed,
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.queue),
-            label: 'Queue',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.queue), label: 'Queue'),
           BottomNavigationBarItem(
             icon: Icon(Icons.trending_up),
             label: 'Earnings',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       );
     } else if (widget.userType == 'admin') {
@@ -245,10 +226,7 @@ class _AppShellState extends State<AppShell> {
             icon: Icon(Icons.dashboard),
             label: 'Dashboard',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.store),
-            label: 'Shop',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.store), label: 'Shop'),
           BottomNavigationBarItem(
             icon: Icon(Icons.bar_chart),
             label: 'Reports',

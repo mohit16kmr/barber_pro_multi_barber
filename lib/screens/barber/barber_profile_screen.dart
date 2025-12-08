@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -25,32 +25,6 @@ class _BarberProfileScreenState extends State<BarberProfileScreen> {
         elevation: 0,
         backgroundColor: const Color(0xFF1E88E5),
         foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () {
-              context.push('/barber-edit-profile');
-            },
-          ),
-          PopupMenuButton<String>(
-            onSelected: (value) async {
-              if (value == 'settings') {
-                context.push('/barber-settings');
-              } else if (value == 'logout') {
-                final authProvider = context.read<AuthProvider>();
-                await authProvider.signOut();
-                if (!mounted) return;
-                if (mounted) {
-                  context.go('/login');
-                }
-              }
-            },
-            itemBuilder: (ctx) => [
-              const PopupMenuItem(value: 'settings', child: Text('Settings')),
-              const PopupMenuItem(value: 'logout', child: Text('Logout')),
-            ],
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -93,10 +67,7 @@ class _BarberProfileScreenState extends State<BarberProfileScreen> {
                   const SizedBox(height: 8),
                   Text(
                     barber?.shopName ?? 'Shop Name',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.white70,
-                    ),
+                    style: const TextStyle(fontSize: 16, color: Colors.white70),
                   ),
                   const SizedBox(height: 16),
                   if (barber?.verified ?? false)
@@ -106,7 +77,7 @@ class _BarberProfileScreenState extends State<BarberProfileScreen> {
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.9),
+                        color: Colors.green.withAlpha((0.9 * 255).round()),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Row(
@@ -139,7 +110,7 @@ class _BarberProfileScreenState extends State<BarberProfileScreen> {
                 border: Border.all(color: Colors.grey[200]!),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.grey.withOpacity(0.1),
+                    color: Colors.grey.withAlpha((0.1 * 255).round()),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -149,21 +120,21 @@ class _BarberProfileScreenState extends State<BarberProfileScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _buildStatItem(
-                    '${barber?.rating.toStringAsFixed(1) ?? '0.0'}',
+                    barber?.rating.toStringAsFixed(1) ?? '0.0',
                     'Rating',
                     Colors.amber,
                     Icons.star,
                   ),
                   Container(height: 40, width: 1, color: Colors.grey[300]),
                   _buildStatItem(
-                    '${barber?.totalEarnings.toStringAsFixed(0) ?? '0'}',
+                    barber?.totalEarnings.toStringAsFixed(0) ?? '0',
                     'Total Earnings',
                     Colors.green,
                     Icons.currency_rupee,
                   ),
                   Container(height: 40, width: 1, color: Colors.grey[300]),
                   _buildStatItem(
-                    '${barberProvider.currentBarberQueue.length}',
+                    barberProvider.currentBarberQueue.length.toString(),
                     'In Queue',
                     Colors.orange,
                     Icons.people,
@@ -180,10 +151,7 @@ class _BarberProfileScreenState extends State<BarberProfileScreen> {
                 children: [
                   const Text(
                     'Contact Information',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
                   _buildInfoCard(
@@ -238,51 +206,97 @@ class _BarberProfileScreenState extends State<BarberProfileScreen> {
                       value: barber.ownerName,
                       icon: Icons.person,
                     ),
-                    if ((barber.referralCode ?? '').isNotEmpty)
-                      ...[
-                        const SizedBox(height: 10),
-                        _buildDetailCard(
-                          label: 'Referral Code',
-                          value: barber.referralCode ?? 'N/A',
-                          icon: Icons.code,
+                    if ((barber.referralCode ?? '').isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      _buildDetailCard(
+                        label: 'Referral Code',
+                        value: barber.referralCode ?? 'N/A',
+                        icon: Icons.code,
+                      ),
+                    ],
+                    if (barber.isOnline) ...[
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withAlpha((0.1 * 255).round()),
+                          border: Border.all(color: Colors.green),
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                      ],
-                    if (barber.isOnline)
-                      ...[
-                        const SizedBox(height: 10),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.1),
-                            border: Border.all(color: Colors.green),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 12,
-                                height: 12,
-                                decoration: const BoxDecoration(
-                                  color: Colors.green,
-                                  shape: BoxShape.circle,
-                                ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 12,
+                              height: 12,
+                              decoration: const BoxDecoration(
+                                color: Colors.green,
+                                shape: BoxShape.circle,
                               ),
-                              const SizedBox(width: 12),
-                              const Text(
-                                'Currently Online',
-                                style: TextStyle(
-                                  color: Colors.green,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                ),
+                            ),
+                            const SizedBox(width: 12),
+                            const Text(
+                              'Currently Online',
+                              style: TextStyle(
+                                color: Colors.green,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
+                    ],
                   ],
                 ),
               ),
+
+            const SizedBox(height: 24),
+
+            // Action Buttons
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        context.push('/barber-edit-profile');
+                      },
+                      icon: const Icon(Icons.edit),
+                      label: const Text('Edit Profile'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1E88E5),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        context.push('/barber-settings');
+                      },
+                      icon: const Icon(Icons.settings),
+                      label: const Text('Settings'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey[600],
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
             const SizedBox(height: 24),
           ],
@@ -340,7 +354,7 @@ class _BarberProfileScreenState extends State<BarberProfileScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
+              color: color.withAlpha((0.15 * 255).round()),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: color, size: 20),

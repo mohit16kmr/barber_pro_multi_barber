@@ -21,18 +21,10 @@ class Service extends Equatable {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'name': name,
-      'price': price,
-      'durationMinutes': durationMinutes,
-    };
+    return {'name': name, 'price': price, 'durationMinutes': durationMinutes};
   }
 
-  Service copyWith({
-    String? name,
-    double? price,
-    int? durationMinutes,
-  }) {
+  Service copyWith({String? name, double? price, int? durationMinutes}) {
     return Service(
       name: name ?? this.name,
       price: price ?? this.price,

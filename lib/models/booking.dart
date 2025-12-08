@@ -49,7 +49,8 @@ class Booking extends Equatable {
       customerId: data['customerId'] ?? '',
       barberId: data['barberId'] ?? '',
       tokenNumber: data['tokenNumber'] ?? 0,
-      services: (data['services'] as List<dynamic>?)
+      services:
+          (data['services'] as List<dynamic>?)
               ?.map((s) => Service.fromJson(s as Map<String, dynamic>))
               .toList() ??
           [],
@@ -83,7 +84,9 @@ class Booking extends Equatable {
       'bookingTime': Timestamp.fromDate(bookingTime),
       'estimatedWaitTime': estimatedWaitTime,
       'actualServiceTime': actualServiceTime,
-      'completionTime': completionTime != null ? Timestamp.fromDate(completionTime!) : null,
+      'completionTime': completionTime != null
+          ? Timestamp.fromDate(completionTime!)
+          : null,
       'cancellationReason': cancellationReason,
       'cancelledBy': cancelledBy,
       'rating': rating,
@@ -133,22 +136,22 @@ class Booking extends Equatable {
 
   @override
   List<Object?> get props => [
-        bookingId,
-        customerId,
-        barberId,
-        tokenNumber,
-        services,
-        totalPrice,
-        status,
-        paymentMethod,
-        paymentStatus,
-        bookingTime,
-        estimatedWaitTime,
-        actualServiceTime,
-        completionTime,
-        cancellationReason,
-        cancelledBy,
-        rating,
-        review,
-      ];
+    bookingId,
+    customerId,
+    barberId,
+    tokenNumber,
+    services,
+    totalPrice,
+    status,
+    paymentMethod,
+    paymentStatus,
+    bookingTime,
+    estimatedWaitTime,
+    actualServiceTime,
+    completionTime,
+    cancellationReason,
+    cancelledBy,
+    rating,
+    review,
+  ];
 }

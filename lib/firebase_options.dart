@@ -24,7 +24,7 @@ class DefaultFirebaseOptions {
       'For Android/iOS flavors initialize Firebase with the native '
       'google-services.json/GoogleService-Info.plist by calling '
       '`await Firebase.initializeApp()` in each flavor main. To regenerate '
-      'Web options run the FlutterFire CLI and replace the `web` section.'
+      'Web options run the FlutterFire CLI and replace the `web` section.',
     );
   }
 
@@ -52,8 +52,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '612832799916',
     projectId: 'barber-pro-20d4b',
     storageBucket: 'barber-pro-20d4b.firebasestorage.app',
-    androidClientId: '612832799916-ebupr20pp9uirq25eu7qnl2vrrdl9gnh.apps.googleusercontent.com',
-    iosClientId: '612832799916-srjjs1dpv8ch2miiskn21oa9ases7gpm.apps.googleusercontent.com',
+    androidClientId:
+        '612832799916-ebupr20pp9uirq25eu7qnl2vrrdl9gnh.apps.googleusercontent.com',
+    iosClientId:
+        '612832799916-srjjs1dpv8ch2miiskn21oa9ases7gpm.apps.googleusercontent.com',
     iosBundleId: 'com.example.newbarberproject',
   );
 
@@ -63,8 +65,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '612832799916',
     projectId: 'barber-pro-20d4b',
     storageBucket: 'barber-pro-20d4b.firebasestorage.app',
-    androidClientId: '612832799916-ebupr20pp9uirq25eu7qnl2vrrdl9gnh.apps.googleusercontent.com',
-    iosClientId: '612832799916-srjjs1dpv8ch2miiskn21oa9ases7gpm.apps.googleusercontent.com',
+    androidClientId:
+        '612832799916-ebupr20pp9uirq25eu7qnl2vrrdl9gnh.apps.googleusercontent.com',
+    iosClientId:
+        '612832799916-srjjs1dpv8ch2miiskn21oa9ases7gpm.apps.googleusercontent.com',
     iosBundleId: 'com.example.newbarberproject',
   );
 
@@ -77,9 +81,8 @@ class DefaultFirebaseOptions {
     storageBucket: 'barber-pro-20d4b.firebasestorage.app',
     measurementId: 'G-K8ZZQ6Y9MT',
   );
-
 }
 
-// Import this in main.dart like: 
+// Import this in main.dart like:
 // import 'firebase_options.dart';
 // Then use: options: DefaultFirebaseOptions.currentPlatform

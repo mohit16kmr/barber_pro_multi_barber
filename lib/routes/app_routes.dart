@@ -104,7 +104,16 @@ GoRouter createAppRouter(Stream<dynamic> authStateStream) {
       // FLAVOR-BASED ROUTE GATING: Prevent access to routes not intended for this flavor
       // Admin flavor should ONLY see admin routes
       if (flavorIsAdmin) {
-        final adminRoutes = ['/splash', '/login', '/signup', '/forgot-password', '/admin-dashboard', '/admin-shop-management', '/admin-reports', '/admin-agents'];
+        final adminRoutes = [
+          '/splash',
+          '/login',
+          '/signup',
+          '/forgot-password',
+          '/admin-dashboard',
+          '/admin-shop-management',
+          '/admin-reports',
+          '/admin-agents',
+        ];
         if (!adminRoutes.any((route) => location.startsWith(route))) {
           if (isLoggedIn) return '/admin-dashboard';
           return '/login';
@@ -113,17 +122,41 @@ GoRouter createAppRouter(Stream<dynamic> authStateStream) {
 
       // Barber flavor should ONLY see barber routes (NO customer routes like /discovery, /home)
       if (flavorIsBarber) {
-        final barberRoutes = ['/splash', '/login', '/signup', '/forgot-password', '/barber-home', '/barber-list', '/barber-profile', '/barber-edit-profile', '/barber-settings', '/barber-queue', '/barber-earnings', '/shop-earnings', '/barber-availability'];
-        
+        final barberRoutes = [
+          '/splash',
+          '/login',
+          '/signup',
+          '/forgot-password',
+          '/barber-home',
+          '/barber-list',
+          '/barber-profile',
+          '/barber-edit-profile',
+          '/barber-settings',
+          '/barber-queue',
+          '/barber-earnings',
+          '/shop-earnings',
+          '/barber-availability',
+        ];
+
         // ALSO block customer routes explicitly
-        final customerRoutes = ['/home', '/discovery', '/bookings', '/booking', '/queue', '/booking-details', '/profile', '/settings', '/edit-profile'];
-        
+        final customerRoutes = [
+          '/home',
+          '/discovery',
+          '/bookings',
+          '/booking',
+          '/queue',
+          '/booking-details',
+          '/profile',
+          '/settings',
+          '/edit-profile',
+        ];
+
         // If trying to access customer route, redirect to barber home
         if (customerRoutes.any((route) => location.startsWith(route))) {
           if (isLoggedIn) return '/barber-home';
           return '/login';
         }
-        
+
         // If trying to access non-barber route, redirect
         if (!barberRoutes.any((route) => location.startsWith(route))) {
           if (isLoggedIn) return '/barber-home';
@@ -133,17 +166,41 @@ GoRouter createAppRouter(Stream<dynamic> authStateStream) {
 
       // Customer flavor should ONLY see customer routes (NO barber routes)
       if (!flavorIsAdmin && !flavorIsBarber) {
-        final customerRoutes = ['/splash', '/login', '/signup', '/forgot-password', '/home', '/discovery', '/bookings', '/booking', '/queue', '/booking-details', '/profile', '/settings', '/edit-profile'];
-        
+        final customerRoutes = [
+          '/splash',
+          '/login',
+          '/signup',
+          '/forgot-password',
+          '/home',
+          '/discovery',
+          '/bookings',
+          '/booking',
+          '/queue',
+          '/booking-details',
+          '/profile',
+          '/settings',
+          '/edit-profile',
+        ];
+
         // ALSO block barber routes explicitly
-        final barberRoutes = ['/barber-home', '/barber-list', '/barber-profile', '/barber-edit-profile', '/barber-settings', '/barber-queue', '/barber-earnings', '/shop-earnings', '/barber-availability'];
-        
+        final barberRoutes = [
+          '/barber-home',
+          '/barber-list',
+          '/barber-profile',
+          '/barber-edit-profile',
+          '/barber-settings',
+          '/barber-queue',
+          '/barber-earnings',
+          '/shop-earnings',
+          '/barber-availability',
+        ];
+
         // If trying to access barber route, redirect to home
         if (barberRoutes.any((route) => location.startsWith(route))) {
           if (isLoggedIn) return '/home';
           return '/login';
         }
-        
+
         // If trying to access non-customer route, redirect
         if (!customerRoutes.any((route) => location.startsWith(route))) {
           if (isLoggedIn) return '/home';
@@ -151,7 +208,8 @@ GoRouter createAppRouter(Stream<dynamic> authStateStream) {
         }
       }
 
-      final isGoingToAuth = location == '/login' ||
+      final isGoingToAuth =
+          location == '/login' ||
           location == '/signup' ||
           location == '/forgot-password' ||
           location == '/splash';
@@ -214,10 +272,7 @@ GoRouter createAppRouter(Stream<dynamic> authStateStream) {
       if (!flavorIsAdmin && !flavorIsBarber)
         ShellRoute(
           builder: (context, state, child) {
-            return AppShell(
-              userType: 'customer',
-              child: child,
-            );
+            return AppShell(userType: 'customer', child: child);
           },
           routes: [
             GoRoute(
@@ -250,7 +305,9 @@ GoRouter createAppRouter(Stream<dynamic> authStateStream) {
                 final bookingId = state.pathParameters['bookingId'] ?? '';
                 return Scaffold(
                   body: Center(
-                    child: Text('Queue Screen for Booking: $bookingId - Coming Soon'),
+                    child: Text(
+                      'Queue Screen for Booking: $bookingId - Coming Soon',
+                    ),
                   ),
                 );
               },
@@ -291,10 +348,7 @@ GoRouter createAppRouter(Stream<dynamic> authStateStream) {
       if (flavorIsBarber)
         ShellRoute(
           builder: (context, state, child) {
-            return AppShell(
-              userType: 'barber',
-              child: child,
-            );
+            return AppShell(userType: 'barber', child: child);
           },
           routes: [
             GoRoute(
@@ -356,10 +410,7 @@ GoRouter createAppRouter(Stream<dynamic> authStateStream) {
       if (flavorIsAdmin)
         ShellRoute(
           builder: (context, state, child) {
-            return AppShell(
-              userType: 'admin',
-              child: child,
-            );
+            return AppShell(userType: 'admin', child: child);
           },
           routes: [
             GoRoute(
@@ -382,29 +433,28 @@ GoRouter createAppRouter(Stream<dynamic> authStateStream) {
               name: AppRoute.adminAgents,
               builder: (context, state) => const AdminAgentManagementScreen(),
             ),
-      ],
-    ),
-  ],
+          ],
+        ),
+    ],
 
-  /// Error handling
-  errorBuilder: (context, state) => Scaffold(
-    appBar: AppBar(title: const Text('Error')),
-    body: Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.error, size: 48, color: Colors.red),
-          const SizedBox(height: 16),
-          Text('Error: ${state.error}'),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () => context.go('/splash'),
-            child: const Text('Go to Home'),
-          ),
-        ],
+    /// Error handling
+    errorBuilder: (context, state) => Scaffold(
+      appBar: AppBar(title: const Text('Error')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            Text('Error: ${state.error}'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => context.go('/splash'),
+              child: const Text('Go to Home'),
+            ),
+          ],
+        ),
       ),
     ),
-  ),
-);
-
+  );
 }

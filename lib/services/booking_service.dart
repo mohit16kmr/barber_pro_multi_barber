@@ -19,26 +19,30 @@ class BookingService {
     int estimatedWaitTime,
   ) async {
     try {
-      _logger.i('Creating booking for customer: $customerId at barber: $barberId');
+      _logger.i(
+        'Creating booking for customer: $customerId at barber: $barberId',
+      );
 
       final bookingId = _uuid.v4();
       final now = DateTime.now();
-      final totalPrice =
-          services.fold<double>(0, (total, service) => total + service.price);
+      final totalPrice = services.fold<double>(
+        0,
+        (total, service) => total + service.price,
+      );
 
       // Use transaction for atomicity with token generation
       await _firestore.runTransaction((transaction) async {
         // Get barber reference and current token
-        final barberRef =
-            _firestore.collection(AppConstants.barbersCollection).doc(barberId);
+        final barberRef = _firestore
+            .collection(AppConstants.barbersCollection)
+            .doc(barberId);
         final barberSnapshot = await transaction.get(barberRef);
 
         if (!barberSnapshot.exists) {
           throw Exception('Barber not found');
         }
 
-        final currentToken =
-            (barberSnapshot['currentToken'] as int?) ?? 0;
+        final currentToken = (barberSnapshot['currentToken'] as int?) ?? 0;
         final newToken = currentToken + 1;
 
         // Create booking with generated token
@@ -58,9 +62,7 @@ class BookingService {
 
         // Add booking to bookings collection
         transaction.set(
-          _firestore
-              .collection(AppConstants.bookingsCollection)
-              .doc(bookingId),
+          _firestore.collection(AppConstants.bookingsCollection).doc(bookingId),
           booking.toFirestore(),
         );
 
@@ -73,7 +75,7 @@ class BookingService {
               'tokenNumber': newToken,
               'customerId': customerId,
               'status': AppConstants.bookingStatusWaiting,
-            }
+            },
           ]),
           'queueLength': FieldValue.increment(1),
         });
@@ -120,14 +122,15 @@ class BookingService {
         .doc(bookingId)
         .snapshots()
         .map((doc) {
-      if (!doc.exists) {
-        _logger.w('Booking $bookingId not found in stream');
-        return null;
-      }
-      return Booking.fromFirestore(doc);
-    }).handleError((error) {
-      _logger.e('Error in booking stream: $error');
-    });
+          if (!doc.exists) {
+            _logger.w('Booking $bookingId not found in stream');
+            return null;
+          }
+          return Booking.fromFirestore(doc);
+        })
+        .handleError((error) {
+          _logger.e('Error in booking stream: $error');
+        });
   }
 
   /// Get customer's bookings
@@ -167,7 +170,10 @@ class BookingService {
       final querySnapshot = await _firestore
           .collection(AppConstants.bookingsCollection)
           .where('barberId', isEqualTo: barberId)
-          .where('bookingTime', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+          .where(
+            'bookingTime',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
+          )
           .where('bookingTime', isLessThan: Timestamp.fromDate(endOfDay))
           .orderBy('bookingTime', descending: false)
           .get();
@@ -185,19 +191,14 @@ class BookingService {
   }
 
   /// Update booking status
-  Future<void> updateBookingStatus(
-    String bookingId,
-    String newStatus,
-  ) async {
+  Future<void> updateBookingStatus(String bookingId, String newStatus) async {
     try {
       _logger.i('Updating booking $bookingId status to: $newStatus');
 
       await _firestore
           .collection(AppConstants.bookingsCollection)
           .doc(bookingId)
-          .update({
-        'status': newStatus,
-      });
+          .update({'status': newStatus});
 
       _logger.i('Booking status updated successfully');
     } catch (e) {
@@ -212,14 +213,14 @@ class BookingService {
     int estimatedWaitTime,
   ) async {
     try {
-      _logger.i('Updating booking $bookingId wait time to: $estimatedWaitTime minutes');
+      _logger.i(
+        'Updating booking $bookingId wait time to: $estimatedWaitTime minutes',
+      );
 
       await _firestore
           .collection(AppConstants.bookingsCollection)
           .doc(bookingId)
-          .update({
-        'estimatedWaitTime': estimatedWaitTime,
-      });
+          .update({'estimatedWaitTime': estimatedWaitTime});
 
       _logger.i('Estimated wait time updated');
     } catch (e) {
@@ -240,11 +241,11 @@ class BookingService {
           .collection(AppConstants.bookingsCollection)
           .doc(bookingId)
           .update({
-        'status': AppConstants.bookingStatusCompleted,
-        'paymentStatus': AppConstants.paymentStatusCompleted,
-        'completionTime': Timestamp.now(),
-        'actualServiceTime': actualServiceTime,
-      });
+            'status': AppConstants.bookingStatusCompleted,
+            'paymentStatus': AppConstants.paymentStatusCompleted,
+            'completionTime': Timestamp.now(),
+            'actualServiceTime': actualServiceTime,
+          });
 
       _logger.i('Booking completed successfully');
     } catch (e) {
@@ -266,11 +267,11 @@ class BookingService {
           .collection(AppConstants.bookingsCollection)
           .doc(bookingId)
           .update({
-        'status': AppConstants.bookingStatusCancelled,
-        'cancelledBy': cancelledBy,
-        'cancellationReason': cancellationReason,
-        'completionTime': Timestamp.now(),
-      });
+            'status': AppConstants.bookingStatusCancelled,
+            'cancelledBy': cancelledBy,
+            'cancellationReason': cancellationReason,
+            'completionTime': Timestamp.now(),
+          });
 
       _logger.i('Booking cancelled successfully');
     } catch (e) {
@@ -288,9 +289,9 @@ class BookingService {
           .collection(AppConstants.bookingsCollection)
           .doc(bookingId)
           .update({
-        'status': AppConstants.bookingStatusSkipped,
-        'completionTime': Timestamp.now(),
-      });
+            'status': AppConstants.bookingStatusSkipped,
+            'completionTime': Timestamp.now(),
+          });
 
       _logger.i('Booking skipped successfully');
     } catch (e) {
@@ -311,10 +312,7 @@ class BookingService {
       await _firestore
           .collection(AppConstants.bookingsCollection)
           .doc(bookingId)
-          .update({
-        'rating': rating,
-        'review': review,
-      });
+          .update({'rating': rating, 'review': review});
 
       _logger.i('Rating and review added successfully');
     } catch (e) {
@@ -338,9 +336,14 @@ class BookingService {
           .collection(AppConstants.bookingsCollection)
           .where('barberId', isEqualTo: barberId)
           .where('status', isEqualTo: AppConstants.bookingStatusCompleted)
-          .where('completionTime',
-              isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
-          .where('completionTime', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
+          .where(
+            'completionTime',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startDate),
+          )
+          .where(
+            'completionTime',
+            isLessThanOrEqualTo: Timestamp.fromDate(endDate),
+          )
           .orderBy('completionTime', descending: true)
           .get();
 
@@ -380,19 +383,22 @@ class BookingService {
     return _firestore
         .collection(AppConstants.bookingsCollection)
         .where('barberId', isEqualTo: barberId)
-        .where('status',
-            whereIn: [
-              AppConstants.bookingStatusWaiting,
-              AppConstants.bookingStatusNext,
-              AppConstants.bookingStatusServing,
-            ])
+        .where(
+          'status',
+          whereIn: [
+            AppConstants.bookingStatusWaiting,
+            AppConstants.bookingStatusNext,
+            AppConstants.bookingStatusServing,
+          ],
+        )
         .orderBy('bookingTime', descending: false)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Booking.fromFirestore(doc))
-            .toList())
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) => Booking.fromFirestore(doc)).toList(),
+        )
         .handleError((error) {
-      _logger.e('Error in queue stream: $error');
-    });
+          _logger.e('Error in queue stream: $error');
+        });
   }
 }

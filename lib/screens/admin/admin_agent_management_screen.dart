@@ -12,7 +12,8 @@ class AdminAgentManagementScreen extends StatefulWidget {
       _AdminAgentManagementScreenState();
 }
 
-class _AdminAgentManagementScreenState extends State<AdminAgentManagementScreen> {
+class _AdminAgentManagementScreenState
+    extends State<AdminAgentManagementScreen> {
   late AgentService _agentService;
   final Logger _logger = Logger();
   List<Agent> _agents = [];
@@ -76,6 +77,8 @@ class _AdminAgentManagementScreenState extends State<AdminAgentManagementScreen>
   /// Show add agent dialog
   void _showAddAgentDialog() {
     _clearForm();
+    final navigator = Navigator.of(context, rootNavigator: true);
+    final messenger = ScaffoldMessenger.of(context);
 
     showDialog(
       context: context,
@@ -119,8 +122,9 @@ class _AdminAgentManagementScreenState extends State<AdminAgentManagementScreen>
                     if (value?.isEmpty ?? true) {
                       return 'Email is required';
                     }
-                    if (!RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
-                        .hasMatch(value!)) {
+                    if (!RegExp(
+                      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+                    ).hasMatch(value!)) {
                       return 'Enter a valid email';
                     }
                     return null;
@@ -188,12 +192,13 @@ class _AdminAgentManagementScreenState extends State<AdminAgentManagementScreen>
                   commissionRate: double.parse(_commissionRateController.text),
                 );
 
-                if (!mounted) return;
-                Navigator.pop(ctx);
+                navigator.pop();
 
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   SnackBar(
-                    content: Text('Agent "${_nameController.text}" created successfully!'),
+                    content: Text(
+                      'Agent "${_nameController.text}" created successfully!',
+                    ),
                     backgroundColor: Colors.green,
                   ),
                 );
@@ -201,8 +206,7 @@ class _AdminAgentManagementScreenState extends State<AdminAgentManagementScreen>
                 // Reload agents
                 await _loadAgents();
               } catch (e) {
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   SnackBar(
                     content: Text('Error creating agent: $e'),
                     backgroundColor: Colors.red,
@@ -223,6 +227,8 @@ class _AdminAgentManagementScreenState extends State<AdminAgentManagementScreen>
     _emailController.text = agent.email;
     _phoneController.text = agent.phone;
     _commissionRateController.text = agent.commissionRate.toString();
+    final navigator = Navigator.of(context, rootNavigator: true);
+    final messenger = ScaffoldMessenger.of(context);
 
     showDialog(
       context: context,
@@ -282,7 +288,8 @@ class _AdminAgentManagementScreenState extends State<AdminAgentManagementScreen>
                     prefixIcon: Icon(Icons.percent),
                   ),
                   validator: (value) {
-                    if (value?.isEmpty ?? true) return 'Commission rate is required';
+                    if (value?.isEmpty ?? true)
+                      return 'Commission rate is required'; // ignore: curly_braces_in_flow_control_structures
                     final rate = double.tryParse(value!);
                     if (rate == null || rate < 0 || rate > 100) {
                       return 'Enter a valid percentage (0-100)';
@@ -313,10 +320,9 @@ class _AdminAgentManagementScreenState extends State<AdminAgentManagementScreen>
 
                 await _agentService.updateAgent(updatedAgent);
 
-                if (!mounted) return;
-                Navigator.pop(ctx);
+                navigator.pop();
 
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   const SnackBar(
                     content: Text('Agent updated successfully!'),
                     backgroundColor: Colors.green,
@@ -326,8 +332,7 @@ class _AdminAgentManagementScreenState extends State<AdminAgentManagementScreen>
                 // Reload agents
                 await _loadAgents();
               } catch (e) {
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   SnackBar(
                     content: Text('Error updating agent: $e'),
                     backgroundColor: Colors.red,
@@ -344,6 +349,9 @@ class _AdminAgentManagementScreenState extends State<AdminAgentManagementScreen>
 
   /// Show delete confirmation dialog
   void _showDeleteConfirmDialog(Agent agent) {
+    final navigator = Navigator.of(context, rootNavigator: true);
+    final messenger = ScaffoldMessenger.of(context);
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -362,10 +370,9 @@ class _AdminAgentManagementScreenState extends State<AdminAgentManagementScreen>
               try {
                 await _agentService.deleteAgent(agent.agentId);
 
-                if (!mounted) return;
-                Navigator.pop(ctx);
+                navigator.pop();
 
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   const SnackBar(
                     content: Text('Agent deleted successfully!'),
                     backgroundColor: Colors.green,
@@ -375,8 +382,7 @@ class _AdminAgentManagementScreenState extends State<AdminAgentManagementScreen>
                 // Reload agents
                 await _loadAgents();
               } catch (e) {
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   SnackBar(
                     content: Text('Error deleting agent: $e'),
                     backgroundColor: Colors.red,
@@ -384,9 +390,7 @@ class _AdminAgentManagementScreenState extends State<AdminAgentManagementScreen>
                 );
               }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Delete', style: TextStyle(color: Colors.white)),
           ),
         ],
@@ -421,7 +425,7 @@ class _AdminAgentManagementScreenState extends State<AdminAgentManagementScreen>
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.1),
+                        color: Colors.red.withAlpha((0.1 * 255).round()),
                         border: Border.all(color: Colors.red),
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -474,7 +478,12 @@ class _AdminAgentManagementScreenState extends State<AdminAgentManagementScreen>
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                _agents.fold<int>(0, (sum, a) => sum + a.shopsCount).toString(),
+                                _agents
+                                    .fold<int>(
+                                      0,
+                                      (sum, a) => sum + a.shopsCount,
+                                    )
+                                    .toString(),
                                 style: const TextStyle(
                                   fontSize: 28,
                                   fontWeight: FontWeight.bold,
@@ -539,7 +548,8 @@ class _AdminAgentManagementScreenState extends State<AdminAgentManagementScreen>
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
                                   Tooltip(
-                                    message: '${agent.shopsCount} shops registered',
+                                    message:
+                                        '${agent.shopsCount} shops registered',
                                     child: Chip(
                                       label: Text(
                                         agent.shopsCount.toString(),
@@ -574,9 +584,18 @@ class _AdminAgentManagementScreenState extends State<AdminAgentManagementScreen>
                                         value: 'delete',
                                         child: Row(
                                           children: [
-                                            Icon(Icons.delete, size: 20, color: Colors.red),
+                                            Icon(
+                                              Icons.delete,
+                                              size: 20,
+                                              color: Colors.red,
+                                            ),
                                             SizedBox(width: 8),
-                                            Text('Delete', style: TextStyle(color: Colors.red)),
+                                            Text(
+                                              'Delete',
+                                              style: TextStyle(
+                                                color: Colors.red,
+                                              ),
+                                            ),
                                           ],
                                         ),
                                       ),
@@ -617,9 +636,7 @@ class _AdminAgentManagementScreenState extends State<AdminAgentManagementScreen>
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  CircleAvatar(
-                    child: Text(agent.name[0].toUpperCase()),
-                  ),
+                  CircleAvatar(child: Text(agent.name[0].toUpperCase())),
                 ],
               ),
               const SizedBox(height: 16),
@@ -628,7 +645,10 @@ class _AdminAgentManagementScreenState extends State<AdminAgentManagementScreen>
               _detailRow('Status', agent.isActive ? 'Active' : 'Inactive'),
               _detailRow('Commission Rate', '${agent.commissionRate}%'),
               _detailRow('Shops Registered', agent.shopsCount.toString()),
-              _detailRow('Total Commission', 'Rs ${agent.totalCommission.toStringAsFixed(2)}'),
+              _detailRow(
+                'Total Commission',
+                'Rs ${agent.totalCommission.toStringAsFixed(2)}',
+              ),
               _detailRow(
                 'Member Since',
                 '${agent.createdAt.day}/${agent.createdAt.month}/${agent.createdAt.year}',
@@ -640,10 +660,12 @@ class _AdminAgentManagementScreenState extends State<AdminAgentManagementScreen>
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
-                ...agent.shopIds.map((shopId) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Text('• $shopId'),
-                )),
+                ...agent.shopIds.map(
+                  (shopId) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Text('• $shopId'),
+                  ),
+                ),
               ],
             ],
           ),
@@ -661,12 +683,12 @@ class _AdminAgentManagementScreenState extends State<AdminAgentManagementScreen>
         children: [
           Text(
             label,
-            style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w500),
+            style: const TextStyle(
+              color: Colors.grey,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-          Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
     );

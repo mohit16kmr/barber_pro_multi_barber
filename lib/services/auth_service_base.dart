@@ -7,9 +7,15 @@ abstract class BaseAuthService {
 
   Future<dynamic> signInWithGoogle({required String userType});
 
-  Future<dynamic> signInWithEmailPassword({required String email, required String password});
+  Future<dynamic> signInWithEmailPassword({
+    required String email,
+    required String password,
+  });
 
-  Future<dynamic> createAdminAccount({required String email, required String password});
+  Future<dynamic> createAdminAccount({
+    required String email,
+    required String password,
+  });
 
   Future<void> updateUserProfile({String? displayName, String? photoURL});
 
@@ -19,9 +25,15 @@ abstract class BaseAuthService {
 
   Future<String?> getIdToken({bool forceRefresh = false});
 
-  Future<dynamic> loginWithEmail({required String email, required String password});
+  Future<dynamic> loginWithEmail({
+    required String email,
+    required String password,
+  });
 
-  Future<dynamic> signupWithEmail({required String email, required String password});
+  Future<dynamic> signupWithEmail({
+    required String email,
+    required String password,
+  });
 
   Future<void> resetPassword(String email);
 

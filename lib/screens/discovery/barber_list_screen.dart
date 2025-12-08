@@ -16,6 +16,10 @@ class _BarberListScreenState extends State<BarberListScreen> {
   bool _loading = false;
   bool _loadFailed = false;
   String? _selectedRegion;
+  String? _selectedState;
+  String? _selectedDistrict;
+  String? _selectedBlock;
+  String? _selectedTown;
   bool _useLocationFilter = true; // Filter by user's location by default
 
   @override
@@ -31,26 +35,32 @@ class _BarberListScreenState extends State<BarberListScreen> {
     });
 
     final barberProvider = context.read<BarberProvider>();
+    var loadFailedLocal = false;
     try {
       await barberProvider.loadAllBarbers();
       // If load fails or returns empty, that's OK - show empty state
       // Don't use fallback sample data since we now work with real data
     } catch (e) {
-      if (!mounted) return;
-      setState(() => _loadFailed = true);
-    } finally {
-      if (!mounted) return;
-      setState(() => _loading = false);
+      loadFailedLocal = true;
     }
+
+    if (!mounted) return;
+    setState(() {
+      _loadFailed = loadFailedLocal;
+      _loading = false;
+    });
   }
 
   /// Extract unique regions/villages from barber addresses
   List<String> _buildRegionsList(List<Barber> barbers) {
     final Set<String> regions = {'All Regions'};
-    
+
     for (final barber in barbers) {
       // Extract last part of address (usually village/city name)
-      final addressParts = barber.address.split(',').map((e) => e.trim()).toList();
+      final addressParts = barber.address
+          .split(',')
+          .map((e) => e.trim())
+          .toList();
       if (addressParts.isNotEmpty) {
         // Add the last part (finest granularity - village)
         regions.add(addressParts.last);
@@ -60,10 +70,64 @@ class _BarberListScreenState extends State<BarberListScreen> {
         }
       }
     }
-    
+
     return regions.toList()..sort((a, b) {
       if (a == 'All Regions') return -1;
       if (b == 'All Regions') return 1;
+      return a.compareTo(b);
+    });
+  }
+
+  // Build distinct lists for region filters from barber.region if available
+  List<String> _uniqueStates(List<Barber> barbers) {
+    final s = <String>{'All States'};
+    for (final b in barbers) {
+      final state = b.region?['state'] as String? ?? '';
+      if (state.isNotEmpty) s.add(state);
+    }
+    return s.toList()..sort((a, b) {
+      if (a == 'All States') return -1;
+      if (b == 'All States') return 1;
+      return a.compareTo(b);
+    });
+  }
+
+  List<String> _uniqueDistricts(List<Barber> barbers) {
+    final s = <String>{'All Districts'};
+    for (final b in barbers) {
+      final d = b.region?['district'] as String? ?? '';
+      if (d.isNotEmpty) s.add(d);
+    }
+    return s.toList()..sort((a, b) {
+      if (a == 'All Districts') return -1;
+      if (b == 'All Districts') return 1;
+      return a.compareTo(b);
+    });
+  }
+
+  List<String> _uniqueBlocks(List<Barber> barbers) {
+    final s = <String>{'All Blocks'};
+    for (final b in barbers) {
+      final v = b.region?['block'] as String? ?? '';
+      if (v.isNotEmpty) s.add(v);
+    }
+    return s.toList()..sort((a, b) {
+      if (a == 'All Blocks') return -1;
+      if (b == 'All Blocks') return 1;
+      return a.compareTo(b);
+    });
+  }
+
+  List<String> _uniqueTowns(List<Barber> barbers) {
+    final s = <String>{'All Towns'};
+    for (final b in barbers) {
+      final v =
+          b.region?['town'] as String? ?? b.region?['village'] as String? ?? '';
+      if (v.isNotEmpty) s.add(v);
+    }
+    return s.toList()..sort((a, b) {
+      if (a == 'All Towns') return -1;
+      if (b == 'All Towns') return 1;
       return a.compareTo(b);
     });
   }
@@ -76,26 +140,72 @@ class _BarberListScreenState extends State<BarberListScreen> {
     // Get all barbers from provider (real data only, no fallback)
     final List<Barber> allItems = barberProvider.filteredBarbers;
 
-    // Filter by region
-    final List<Barber> items = _selectedRegion == null || _selectedRegion == 'All Regions'
-        ? allItems
-        : allItems
-            .where((b) => b.address.toLowerCase().contains(
-                _selectedRegion!.toLowerCase()))
-            .toList();
+    // Apply filters: region dropdown or hierarchical region filters (state/district/block/town)
+    List<Barber> items = allItems;
+    if (!(_selectedRegion == null || _selectedRegion == 'All Regions')) {
+      items = items
+          .where(
+            (b) => b.address.toLowerCase().contains(
+              _selectedRegion!.toLowerCase(),
+            ),
+          )
+          .toList();
+    }
+    if (!(_selectedState == null || _selectedState == 'All States')) {
+      items = items
+          .where(
+            (b) =>
+                (b.region?['state'] as String? ?? '').toLowerCase() ==
+                _selectedState!.toLowerCase(),
+          )
+          .toList();
+    }
+    if (!(_selectedDistrict == null || _selectedDistrict == 'All Districts')) {
+      items = items
+          .where(
+            (b) =>
+                (b.region?['district'] as String? ?? '').toLowerCase() ==
+                _selectedDistrict!.toLowerCase(),
+          )
+          .toList();
+    }
+    if (!(_selectedBlock == null || _selectedBlock == 'All Blocks')) {
+      items = items
+          .where(
+            (b) =>
+                (b.region?['block'] as String? ?? '').toLowerCase() ==
+                _selectedBlock!.toLowerCase(),
+          )
+          .toList();
+    }
+    if (!(_selectedTown == null || _selectedTown == 'All Towns')) {
+      items = items.where((b) {
+        final town = (b.region?['town'] as String? ?? '');
+        final village = (b.region?['village'] as String? ?? '');
+        return town.toLowerCase() == _selectedTown!.toLowerCase() ||
+            village.toLowerCase() == _selectedTown!.toLowerCase();
+      }).toList();
+    }
 
     // Filter by user's location (city/state) if enabled
-    final List<Barber> filteredBarbers = _useLocationFilter &&
-            authProvider.currentUser?.city != null
+    final List<Barber> filteredBarbers =
+        _useLocationFilter && authProvider.currentUser?.city != null
         ? items
-            .where((b) =>
-                b.address.toLowerCase().contains(
-                    authProvider.currentUser!.city!.toLowerCase()) ||
-                // Fallback: match if barber address contains any word from user's city
-                b.address.split(' ').any((word) =>
-                    word.toLowerCase().startsWith(
-                        authProvider.currentUser!.city!.toLowerCase())))
-            .toList()
+              .where(
+                (b) =>
+                    b.address.toLowerCase().contains(
+                      authProvider.currentUser!.city!.toLowerCase(),
+                    ) ||
+                    // Fallback: match if barber address contains any word from user's city
+                    b.address
+                        .split(' ')
+                        .any(
+                          (word) => word.toLowerCase().startsWith(
+                            authProvider.currentUser!.city!.toLowerCase(),
+                          ),
+                        ),
+              )
+              .toList()
         : items;
 
     // Sort by least bookings (queue length)
@@ -109,7 +219,7 @@ class _BarberListScreenState extends State<BarberListScreen> {
             icon: const Icon(Icons.refresh),
             onPressed: _tryLoad,
             tooltip: 'Refresh',
-          )
+          ),
         ],
       ),
       body: Column(
@@ -162,6 +272,80 @@ class _BarberListScreenState extends State<BarberListScreen> {
                     },
                   ),
                 ),
+                const SizedBox(height: 12),
+                // Hierarchical filters: State -> District -> Block -> Town/Village
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButton<String>(
+                        isExpanded: true,
+                        value: _selectedState ?? 'All States',
+                        items: _uniqueStates(allItems)
+                            .map(
+                              (s) => DropdownMenuItem(value: s, child: Text(s)),
+                            )
+                            .toList(),
+                        onChanged: (v) => setState(() {
+                          _selectedState = v;
+                          // reset downstream selections
+                          _selectedDistrict = 'All Districts';
+                          _selectedBlock = 'All Blocks';
+                          _selectedTown = 'All Towns';
+                        }),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: DropdownButton<String>(
+                        isExpanded: true,
+                        value: _selectedDistrict ?? 'All Districts',
+                        items: _uniqueDistricts(allItems)
+                            .map(
+                              (s) => DropdownMenuItem(value: s, child: Text(s)),
+                            )
+                            .toList(),
+                        onChanged: (v) => setState(() {
+                          _selectedDistrict = v;
+                          _selectedBlock = 'All Blocks';
+                          _selectedTown = 'All Towns';
+                        }),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButton<String>(
+                        isExpanded: true,
+                        value: _selectedBlock ?? 'All Blocks',
+                        items: _uniqueBlocks(allItems)
+                            .map(
+                              (s) => DropdownMenuItem(value: s, child: Text(s)),
+                            )
+                            .toList(),
+                        onChanged: (v) => setState(() {
+                          _selectedBlock = v;
+                          _selectedTown = 'All Towns';
+                        }),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: DropdownButton<String>(
+                        isExpanded: true,
+                        value: _selectedTown ?? 'All Towns',
+                        items: _uniqueTowns(allItems)
+                            .map(
+                              (s) => DropdownMenuItem(value: s, child: Text(s)),
+                            )
+                            .toList(),
+                        onChanged: (v) => setState(() => _selectedTown = v),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -172,98 +356,112 @@ class _BarberListScreenState extends State<BarberListScreen> {
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
                   : filteredBarbers.isEmpty
-                      ? ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          children: [
-                            const SizedBox(height: 120),
-                            Center(
-                              child: Column(
-                                children: [
-                                  Icon(
-                                    Icons.person_outline,
-                                    size: 64,
-                                    color: Colors.grey[400],
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    _loadFailed
-                                        ? 'Failed to load barbers'
-                                        : 'No barbers available yet',
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    _loadFailed
-                                        ? 'Please check your connection and try again'
-                                        : 'Check back later for available barbers',
-                                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ],
+                  ? ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        const SizedBox(height: 120),
+                        Center(
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.person_outline,
+                                size: 64,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                _loadFailed
+                                    ? 'Failed to load barbers'
+                                    : 'No barbers available yet',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                _loadFailed
+                                    ? 'Please check your connection and try again'
+                                    : 'Check back later for available barbers',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[600],
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.all(12),
+                      itemBuilder: (context, index) {
+                        final barber = filteredBarbers[index];
+                        final isFavorited = authProvider.currentUser != null
+                            ? authProvider.currentUser!.favoriteBarbers
+                                  .contains(barber.barberId)
+                            : false;
+
+                        return Card(
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: barber.isOnline
+                                  ? Colors.green
+                                  : Colors.grey,
+                              child: Text(
+                                barber.shopName.isNotEmpty
+                                    ? barber.shopName[0]
+                                    : '?',
                               ),
                             ),
-                          ],
-                        )
-                      : ListView.separated(
-                          padding: const EdgeInsets.all(12),
-                          itemBuilder: (context, index) {
-                            final barber = filteredBarbers[index];
-                            final isFavorited = authProvider.currentUser != null
-                                ? authProvider.currentUser!.favoriteBarbers
-                                    .contains(barber.barberId)
-                                : false;
-
-                            return Card(
-                              child: ListTile(
-                                leading: CircleAvatar(
-                                  backgroundColor:
-                                      barber.isOnline ? Colors.green : Colors.grey,
-                                  child: Text(barber.shopName.isNotEmpty
-                                      ? barber.shopName[0]
-                                      : '?'),
-                                ),
-                                title: Text(barber.shopName),
-                                subtitle: Text(
-                                    '${barber.ownerName} • ${barber.address}\nRating: ${barber.rating.toStringAsFixed(1)} • Queue: ${barber.queueLength}'),
-                          isThreeLine: true,
-                          trailing: IconButton(
-                            icon: Icon(
+                            title: Text(barber.shopName),
+                            subtitle: Text(
+                              '${barber.ownerName} • ${barber.address}\nRating: ${barber.rating.toStringAsFixed(1)} • Queue: ${barber.queueLength}',
+                            ),
+                            isThreeLine: true,
+                            trailing: IconButton(
+                              icon: Icon(
                                 isFavorited
                                     ? Icons.favorite
                                     : Icons.favorite_border,
-                                color:
-                                    isFavorited ? Colors.red : Colors.grey),
-                            onPressed: () async {
-                              if (!authProvider.isAuthenticated) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Please login to favorite'),
-                                  ),
-                                );
-                                return;
-                              }
+                                color: isFavorited ? Colors.red : Colors.grey,
+                              ),
+                              onPressed: () async {
+                                if (!authProvider.isAuthenticated) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Please login to favorite'),
+                                    ),
+                                  );
+                                  return;
+                                }
 
-                              final ok = await authProvider
-                                  .toggleFavoriteBarber(barber.barberId);
-                              if (!ok) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(authProvider.errorMessage ?? 'Failed'),
-                                  ),
-                                );
-                              }
+                                final messenger = ScaffoldMessenger.of(context);
+                                final ok = await authProvider
+                                    .toggleFavoriteBarber(barber.barberId);
+                                if (!ok) {
+                                  messenger.showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        authProvider.errorMessage ?? 'Failed',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                            onTap: () {
+                              // Navigate to booking flow using go_router push so back works
+                              context.push('/booking/${barber.barberId}');
                             },
                           ),
-                          onTap: () {
-                            // Navigate to booking flow using go_router push so back works
-                            context.push('/booking/${barber.barberId}');
-                          },
-                        ),
-                      );
-                    },
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemCount: filteredBarbers.length,
-                  ),
+                        );
+                      },
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 8),
+                      itemCount: filteredBarbers.length,
+                    ),
             ),
           ),
         ],

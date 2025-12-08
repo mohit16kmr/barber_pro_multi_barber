@@ -86,10 +86,10 @@ class _LoginScreenState extends State<LoginScreen> {
           context.go('/signup');
           return;
         }
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login successful!')),
-        );
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Login successful!')));
         // Route based on user role from profile
         if (authProvider.isBarber()) {
           context.go('/barber-home');
@@ -99,21 +99,20 @@ class _LoginScreenState extends State<LoginScreen> {
           context.go('/home');
         }
       } else {
-        final errorMsg = authProvider.errorMessage ?? 'Login failed. Please check your credentials.';
+        final errorMsg =
+            authProvider.errorMessage ??
+            'Login failed. Please check your credentials.';
         setState(() {
           _errorMessage = errorMsg;
         });
-        
+
         // Show error in snackbar too
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(errorMsg),
               backgroundColor: Colors.red,
-              action: SnackBarAction(
-                label: 'Dismiss',
-                onPressed: () {},
-              ),
+              action: SnackBarAction(label: 'Dismiss', onPressed: () {}),
             ),
           );
         }
@@ -145,32 +144,34 @@ class _LoginScreenState extends State<LoginScreen> {
         });
         return;
       }
-      
+
       // Check if user is already logged in with different role
       if (authProvider.isAuthenticated && authProvider.userRole != userType) {
         if (!mounted) return;
-        
+
         // Show confirmation dialog for role switching
-        final confirmed = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Switch Role?'),
-            content: Text(
-              'You are currently logged in as a ${authProvider.userRole == 'customer' ? 'Customer' : 'Barber'}. '
-              'Do you want to switch to ${userType == 'barber' ? 'Barber' : 'Customer'}?',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
+        final confirmed =
+            await showDialog<bool>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Switch Role?'),
+                content: Text(
+                  'You are currently logged in as a ${authProvider.userRole == 'customer' ? 'Customer' : 'Barber'}. '
+                  'Do you want to switch to ${userType == 'barber' ? 'Barber' : 'Customer'}?',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: const Text('Switch'),
+                  ),
+                ],
               ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('Switch'),
-              ),
-            ],
-          ),
-        ) ?? false;
+            ) ??
+            false;
 
         if (!confirmed) {
           setState(() => _isLoading = false);
@@ -179,7 +180,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         // Sign out before switching role
         await authProvider.signOut();
-        
+
         if (!mounted) return;
       }
 
@@ -196,12 +197,12 @@ class _LoginScreenState extends State<LoginScreen> {
           context.go('/signup');
           return;
         }
-        
+
         // Show success feedback
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Sign-in successful!')),
-        );
-        
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Sign-in successful!')));
+
         // Route based on user's actual role from Firestore profile
         if (authProvider.isBarber()) {
           context.go('/barber-home');
@@ -212,9 +213,11 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       } else {
         setState(() {
-          _errorMessage = authProvider.errorMessage ?? 'Google sign-in failed. Please try again.';
+          _errorMessage =
+              authProvider.errorMessage ??
+              'Google sign-in failed. Please try again.';
         });
-        
+
         // Show error in snackbar too for visibility
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -275,11 +278,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Icon(
-                      Icons.cut,
-                      size: 50,
-                      color: Colors.white,
-                    ),
+                    child: Icon(Icons.cut, size: 50, color: Colors.white),
                   ),
                 ),
               ),
@@ -303,10 +302,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const Text(
                 'Sign in to your account to continue',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF999999),
-                ),
+                style: TextStyle(fontSize: 14, color: Color(0xFF999999)),
               ),
 
               const SizedBox(height: 40),
@@ -316,7 +312,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
+                    color: Colors.red.withAlpha((0.1 * 255).round()),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: Colors.red),
                   ),
@@ -354,8 +350,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           return 'Email is required';
                         }
                         if (!RegExp(
-                                r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
-                            .hasMatch(value!)) {
+                          r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+                        ).hasMatch(value!)) {
                           return 'Please enter a valid email';
                         }
                         return null;
@@ -437,8 +433,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               width: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor:
-                                    AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
                             )
                           : const Text(
@@ -481,19 +478,28 @@ class _LoginScreenState extends State<LoginScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   alignment: Alignment.center,
-                  child: const Text('Admin Login', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'Admin Login',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 )
               else if (FlavorConfig.isBarber)
                 Container(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   alignment: Alignment.center,
-                  child: const Text('Barber Login', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'Barber Login',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 )
               else
                 Container(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   alignment: Alignment.center,
-                  child: const Text('Customer Login', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'Customer Login',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
 
               const SizedBox(height: 24),
@@ -504,7 +510,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: _isLoading ? null : () => _handleGoogleSignIn(_selectedUserType),
+                        onPressed: _isLoading
+                            ? null
+                            : () => _handleGoogleSignIn(_selectedUserType),
                         icon: Container(
                           width: 20,
                           height: 20,
@@ -523,7 +531,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                         ),
-                        label: Text('Continue with Google as ${_selectedUserType == 'barber' ? 'Barber' : 'Customer'}'),
+                        label: Text(
+                          'Continue with Google as ${_selectedUserType == 'barber' ? 'Barber' : 'Customer'}',
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: Colors.black,

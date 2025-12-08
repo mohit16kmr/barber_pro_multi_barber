@@ -59,9 +59,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           if (user?.photoUrl != null)
             Text(
               'Google Profile Photo',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.grey,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: Colors.grey),
             ),
         ],
       ),
@@ -103,7 +103,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         });
       } else {
         setState(() {
-          _errorMessage = authProvider.errorMessage ?? 'Failed to update profile';
+          _errorMessage =
+              authProvider.errorMessage ?? 'Failed to update profile';
         });
       }
     } catch (e) {
@@ -124,9 +125,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.black),
-              onPressed: () => context.go('/profile'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => context.go('/profile'),
         ),
       ),
       body: SingleChildScrollView(
@@ -136,7 +137,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               /// Profile Photo Section
-              _buildProfilePhotoSection(context.read<AuthProvider>().currentUser),
+              _buildProfilePhotoSection(
+                context.read<AuthProvider>().currentUser,
+              ),
               const SizedBox(height: 24),
 
               /// Error message
@@ -144,7 +147,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
+                    color: Colors.red.withAlpha((0.1 * 255).round()),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: Colors.red),
                   ),
@@ -224,7 +227,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         ),
                       ),
                       validator: (value) {
-                        if (value != null && value.isNotEmpty && value.length < 10) {
+                        if (value != null &&
+                            value.isNotEmpty &&
+                            value.length < 10) {
                           return 'Phone number must be at least 10 digits';
                         }
                         return null;
@@ -249,7 +254,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         helperText: 'Used for location-based barber discovery',
                       ),
                       validator: (value) {
-                        if (value != null && value.isNotEmpty && value.length < 2) {
+                        if (value != null &&
+                            value.isNotEmpty &&
+                            value.length < 2) {
                           return 'City must be at least 2 characters';
                         }
                         return null;
@@ -273,7 +280,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         ),
                       ),
                       validator: (value) {
-                        if (value != null && value.isNotEmpty && value.length < 2) {
+                        if (value != null &&
+                            value.isNotEmpty &&
+                            value.length < 2) {
                           return 'State must be at least 2 characters';
                         }
                         return null;
@@ -301,7 +310,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         width: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
                         ),
                       )
                     : const Text(
@@ -317,8 +328,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               const SizedBox(height: 16),
 
               /// Cancel Button
-                  OutlinedButton(
-                    onPressed: _isLoading ? null : () => context.go('/profile'),
+              OutlinedButton(
+                onPressed: _isLoading ? null : () => context.go('/profile'),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   side: const BorderSide(color: Color(0xFF1E88E5)),

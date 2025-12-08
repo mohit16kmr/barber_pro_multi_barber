@@ -1,1 +1,28 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"barber-pro-20d4b","appId":"1:612832799916:android:7f85f8230c76fd163d0309","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"barber-pro-20d4b","configurations":{"android":"1:612832799916:android:7f85f8230c76fd163d0309","ios":"1:612832799916:ios:e15082115f99d6f73d0309","macos":"1:612832799916:ios:e15082115f99d6f73d0309","web":"1:612832799916:web:034cc60f6eeffb7c3d0309","windows":"1:612832799916:web:e45364b7c2d984f23d0309"}}}}}}
+﻿{
+	"firestore": {
+		"rules": "firestore.rules"
+	},
+	"flutter": {
+		"platforms": {
+			"android": {
+				"default": {
+					"projectId": "barber-pro-20d4b",
+					"appId": "1:612832799916:android:7f85f8230c76fd163d0309",
+					"fileOutput": "android/app/google-services.json"
+				}
+			}
+		},
+		"dart": {
+			"lib/firebase_options.dart": {
+				"projectId": "barber-pro-20d4b",
+				"configurations": {
+					"android": "1:612832799916:android:7f85f8230c76fd163d0309",
+					"ios": "1:612832799916:ios:e15082115f99d6f73d0309",
+					"macos": "1:612832799916:ios:e15082115f99d6f73d0309",
+					"web": "1:612832799916:web:034cc60f6eeffb7c3d0309",
+					"windows": "1:612832799916:web:e45364b7c2d984f23d0309"
+				}
+			}
+		}
+	}
+}

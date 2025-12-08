@@ -112,13 +112,17 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
-                _analyticsRow('Total Revenue', 'Rs ${totalEarnings.toStringAsFixed(0)}', Colors.green),
-                _analyticsRow('Average Per Barber', 'Rs ${avgEarnings.toStringAsFixed(0)}', Colors.blue),
                 _analyticsRow(
-                  'Revenue Growth',
-                  '+12.5%',
-                  Colors.orange,
+                  'Total Revenue',
+                  'Rs ${totalEarnings.toStringAsFixed(0)}',
+                  Colors.green,
                 ),
+                _analyticsRow(
+                  'Average Per Barber',
+                  'Rs ${avgEarnings.toStringAsFixed(0)}',
+                  Colors.blue,
+                ),
+                _analyticsRow('Revenue Growth', '+12.5%', Colors.orange),
                 const SizedBox(height: 16),
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -131,7 +135,10 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                     children: [
                       const Text(
                         'Revenue Trend Chart',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       SizedBox(
@@ -168,10 +175,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
             ),
             child: Text(
               value,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold, color: color),
             ),
           ),
         ],
@@ -223,7 +227,8 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                   itemCount: barbers.length,
                   itemBuilder: (ctx, idx) {
                     final barber = barbers[idx];
-                    final performance = ((barber.rating / 5) * 100).toStringAsFixed(0);
+                    final performance = ((barber.rating / 5) * 100)
+                        .toStringAsFixed(0);
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: Column(
@@ -234,7 +239,9 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                             children: [
                               Text(
                                 barber.ownerName,
-                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                               Text(
                                 '$performance%',
@@ -251,9 +258,13 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                             child: LinearProgressIndicator(
                               value: barber.rating / 5,
                               minHeight: 6,
-                              backgroundColor: Colors.grey.withValues(alpha: 0.3),
+                              backgroundColor: Colors.grey.withValues(
+                                alpha: 0.3,
+                              ),
                               valueColor: AlwaysStoppedAnimation<Color>(
-                                barber.rating >= 4.5 ? Colors.green : Colors.orange,
+                                barber.rating >= 4.5
+                                    ? Colors.green
+                                    : Colors.orange,
                               ),
                             ),
                           ),
@@ -273,10 +284,22 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
   /// Booking Analytics
   Widget _buildBookingAnalytics() {
     // Derive booking analytics from barber incomes where possible
-    final incomes = context.read<BarberProvider>().allBarberIncomes.values.toList();
-    final totalCount = incomes.fold<int>(0, (sum, i) => sum + (i.totalBookings));
-    final completedCount = incomes.fold<int>(0, (sum, i) => sum + (i.bookingsCompleted));
-    final completionRate = totalCount > 0 ? (completedCount / totalCount * 100).toStringAsFixed(1) : '0.0';
+    final incomes = context
+        .read<BarberProvider>()
+        .allBarberIncomes
+        .values
+        .toList();
+    final totalCount = incomes.fold<int>(
+      0,
+      (sum, i) => sum + (i.totalBookings),
+    );
+    final completedCount = incomes.fold<int>(
+      0,
+      (sum, i) => sum + (i.bookingsCompleted),
+    );
+    final completionRate = totalCount > 0
+        ? (completedCount / totalCount * 100).toStringAsFixed(1)
+        : '0.0';
 
     return Card(
       elevation: 2,
@@ -290,26 +313,10 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            _analyticsRow(
-              'Total Bookings',
-              totalCount.toString(),
-              Colors.blue,
-            ),
-            _analyticsRow(
-              'Completed',
-              completedCount.toString(),
-              Colors.green,
-            ),
-            _analyticsRow(
-              'Completion Rate',
-              '$completionRate%',
-              Colors.orange,
-            ),
-            _analyticsRow(
-              'Avg Booking Value',
-              'Rs 500',
-              Colors.purple,
-            ),
+            _analyticsRow('Total Bookings', totalCount.toString(), Colors.blue),
+            _analyticsRow('Completed', completedCount.toString(), Colors.green),
+            _analyticsRow('Completion Rate', '$completionRate%', Colors.orange),
+            _analyticsRow('Avg Booking Value', 'Rs 500', Colors.purple),
           ],
         ),
       ),

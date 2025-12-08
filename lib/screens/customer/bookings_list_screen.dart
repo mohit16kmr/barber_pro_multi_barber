@@ -17,8 +17,9 @@ class _BookingsListScreenState extends State<BookingsListScreen> {
   @override
   void initState() {
     super.initState();
-    // Load bookings when screen opens
-    Future.microtask(() {
+    // Load bookings when screen opens (after first frame to safely use context)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final customerId = context.read<AuthProvider>().currentUser?.uid;
       if (customerId != null) {
         context.read<BookingProvider>().loadCustomerBookings(customerId);
@@ -29,34 +30,33 @@ class _BookingsListScreenState extends State<BookingsListScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
-    
+
     // Ensure user is authenticated
     if (!authProvider.isAuthenticated) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) context.go('/login');
       });
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Bookings'),
-        elevation: 2,
-      ),
+      appBar: AppBar(title: const Text('My Bookings'), elevation: 2),
       body: Consumer<BookingProvider>(
         builder: (context, bookingProvider, child) {
           if (bookingProvider.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
-          
+
           if (bookingProvider.errorMessage != null) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.error_outline, size: 64, color: Colors.red.shade400),
+                  Icon(
+                    Icons.error_outline,
+                    size: 64,
+                    color: Colors.red.shade400,
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     'Error loading bookings',
@@ -87,11 +87,7 @@ class _BookingsListScreenState extends State<BookingsListScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.receipt_long,
-                    size: 64,
-                    color: Colors.grey[400],
-                  ),
+                  Icon(Icons.receipt_long, size: 64, color: Colors.grey[400]),
                   const SizedBox(height: 16),
                   Text(
                     'No bookings yet',
@@ -148,8 +144,8 @@ class _BookingsListScreenState extends State<BookingsListScreen> {
                     child: Text(
                       'Token #${booking.tokenNumber}',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -159,7 +155,7 @@ class _BookingsListScreenState extends State<BookingsListScreen> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.2),
+                      color: statusColor.withAlpha((0.2 * 255).round()),
                       border: Border.all(color: statusColor),
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -224,9 +220,9 @@ class _BookingsListScreenState extends State<BookingsListScreen> {
                   Text(
                     '₹${booking.totalPrice.toStringAsFixed(2)}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
-                        ),
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
                   ),
                 ],
               ),

@@ -99,7 +99,9 @@ class AgentService {
     required String agentId,
   }) async {
     try {
-      _logger.i('Checking if shop $shopId is already registered with agent $agentId');
+      _logger.i(
+        'Checking if shop $shopId is already registered with agent $agentId',
+      );
 
       final agent = await getAgentById(agentId);
 
@@ -108,7 +110,9 @@ class AgentService {
       }
 
       final alreadyRegistered = agent.shopIds.contains(shopId);
-      _logger.i('Shop registration check: alreadyRegistered=$alreadyRegistered');
+      _logger.i(
+        'Shop registration check: alreadyRegistered=$alreadyRegistered',
+      );
 
       return alreadyRegistered;
     } catch (e) {
@@ -187,9 +191,7 @@ class AgentService {
     try {
       _logger.i('Updating agent: ${agent.agentId}');
 
-      final updatedAgent = agent.copyWith(
-        updatedAt: DateTime.now(),
-      );
+      final updatedAgent = agent.copyWith(updatedAt: DateTime.now());
 
       await _firestore
           .collection(AppConstants.agentsCollection)
@@ -211,10 +213,7 @@ class AgentService {
       await _firestore
           .collection(AppConstants.agentsCollection)
           .doc(agentId)
-          .update({
-            'isActive': false,
-            'updatedAt': Timestamp.now(),
-          });
+          .update({'isActive': false, 'updatedAt': Timestamp.now()});
 
       _logger.i('Agent deleted (marked inactive): $agentId');
     } catch (e) {

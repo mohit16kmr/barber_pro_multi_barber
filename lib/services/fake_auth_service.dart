@@ -16,7 +16,8 @@ class FakeAuthService implements BaseAuthService {
   final Map<String, _FakeUser> _users = {};
   _FakeUser? _signedInUser;
 
-  final StreamController<dynamic> _authStateController = StreamController<dynamic>.broadcast();
+  final StreamController<dynamic> _authStateController =
+      StreamController<dynamic>.broadcast();
 
   @override
   dynamic get currentUser => _signedInUser;
@@ -57,7 +58,10 @@ class FakeAuthService implements BaseAuthService {
   }
 
   @override
-  Future<dynamic> signInWithEmailPassword({required String email, required String password}) async {
+  Future<dynamic> signInWithEmailPassword({
+    required String email,
+    required String password,
+  }) async {
     await Future.delayed(const Duration(milliseconds: 250));
     final uid = _usersByEmail[email];
     if (uid == null) return null;
@@ -67,7 +71,10 @@ class FakeAuthService implements BaseAuthService {
   }
 
   @override
-  Future<dynamic> createAdminAccount({required String email, required String password}) async {
+  Future<dynamic> createAdminAccount({
+    required String email,
+    required String password,
+  }) async {
     await Future.delayed(const Duration(milliseconds: 300));
     if (_usersByEmail.containsKey(email)) return null;
     final uid = _uuid.v4();
@@ -80,7 +87,10 @@ class FakeAuthService implements BaseAuthService {
   }
 
   @override
-  Future<void> updateUserProfile({String? displayName, String? photoURL}) async {
+  Future<void> updateUserProfile({
+    String? displayName,
+    String? photoURL,
+  }) async {
     // no-op for fake
     await Future.delayed(const Duration(milliseconds: 100));
   }
@@ -101,10 +111,16 @@ class FakeAuthService implements BaseAuthService {
   }
 
   @override
-  Future<dynamic> loginWithEmail({required String email, required String password}) => signInWithEmailPassword(email: email, password: password);
+  Future<dynamic> loginWithEmail({
+    required String email,
+    required String password,
+  }) => signInWithEmailPassword(email: email, password: password);
 
   @override
-  Future<dynamic> signupWithEmail({required String email, required String password}) async {
+  Future<dynamic> signupWithEmail({
+    required String email,
+    required String password,
+  }) async {
     if (_usersByEmail.containsKey(email)) {
       // mimic Firebase behavior: throw an error could be handled by provider
       throw Exception('email-already-in-use');

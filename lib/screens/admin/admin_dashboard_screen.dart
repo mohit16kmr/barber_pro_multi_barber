@@ -69,11 +69,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       builder: (context, barberProvider, authProvider, _) {
         final totalBarbers = barberProvider.allBarbers.length;
         final totalEarnings = barberProvider.calculateTotalShopEarnings();
-        final avgEarningsPerBarber = barberProvider.calculateAverageBarberEarnings();
+        final avgEarningsPerBarber = barberProvider
+            .calculateAverageBarberEarnings();
 
         // Derive total bookings from barber incomes if available
-        final totalBookings = barberProvider.allBarberIncomes.values
-          .fold<int>(0, (sum, income) => sum + (income.totalBookings));
+        final totalBookings = barberProvider.allBarberIncomes.values.fold<int>(
+          0,
+          (sum, income) => sum + (income.totalBookings),
+        );
 
         return GridView.count(
           crossAxisCount: 2,
@@ -128,7 +131,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [color.withValues(alpha: 0.1), color.withValues(alpha: 0.05)],
+            colors: [
+              color.withValues(alpha: 0.1),
+              color.withValues(alpha: 0.05),
+            ],
           ),
         ),
         child: Column(
@@ -146,7 +152,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 const SizedBox(height: 4),
                 Text(
                   value,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
@@ -175,10 +184,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   children: [
                     const Text(
                       'Barbers',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.green.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(20),
@@ -215,11 +230,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                 children: [
                                   Text(
                                     barber.ownerName,
-                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                   Text(
                                     barber.phone,
-                                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -228,7 +248,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: barber.isOnline
                                         ? Colors.green.withValues(alpha: 0.2)
@@ -240,14 +263,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
-                                      color: barber.isOnline ? Colors.green : Colors.grey,
+                                      color: barber.isOnline
+                                          ? Colors.green
+                                          : Colors.grey,
                                     ),
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   'Rating: ${barber.rating}',
-                                  style: const TextStyle(fontSize: 11, color: Colors.orange),
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.orange,
+                                  ),
                                 ),
                               ],
                             ),
@@ -267,12 +295,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   /// Bookings Summary Section
   Widget _buildBookingsSummary() {
     // Build booking summary from available barber incomes (admin-level summary)
-    final totalBookings = context.read<BarberProvider>().allBarberIncomes.values
-      .fold<int>(0, (sum, i) => sum + (i.totalBookings));
-    final completedCount = context.read<BarberProvider>().allBarberIncomes.values
-      .fold<int>(0, (sum, i) => sum + (i.bookingsCompleted));
-    final pendingCount = (totalBookings - completedCount) > 0 ? (totalBookings - completedCount) : 0;
-    final cancelledCount = 0; // Cancellation tracking requires bookings collection queries
+    final totalBookings = context
+        .read<BarberProvider>()
+        .allBarberIncomes
+        .values
+        .fold<int>(0, (sum, i) => sum + (i.totalBookings));
+    final completedCount = context
+        .read<BarberProvider>()
+        .allBarberIncomes
+        .values
+        .fold<int>(0, (sum, i) => sum + (i.bookingsCompleted));
+    final pendingCount = (totalBookings - completedCount) > 0
+        ? (totalBookings - completedCount)
+        : 0;
+    final cancelledCount =
+        0; // Cancellation tracking requires bookings collection queries
 
     return Card(
       elevation: 2,
@@ -355,17 +392,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     children: [
                       const Text(
                         'Top Performer',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         topPerformer,
-                        style: const TextStyle(fontSize: 16, color: Colors.orange),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.orange,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Text(
                         'Income: Rs ${(barberProvider.allBarberIncomes[topPerformer]?.dailyEarnings ?? 0).toStringAsFixed(0)}',
-                        style: const TextStyle(fontSize: 13, color: Colors.grey),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey,
+                        ),
                       ),
                     ],
                   )

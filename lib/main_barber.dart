@@ -13,14 +13,14 @@ import 'routes/app_routes.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Set flavor config for BARBER
   FlavorConfig.setFlavor(
     AppFlavor.barber,
     'BarberPro Barber',
     'com.barberpro.barber',
   );
-  
+
   try {
     // Prefer the flavor-specific google-services.json provided under
     // android/app/src/barber so the barber app uses its own Firebase client.
@@ -48,11 +48,13 @@ void main() async {
     }
   }
 
-  runApp(MyApp(
-    authProvider: authProvider,
-    barberProvider: barberProvider,
-    themeProvider: themeProvider,
-  ));
+  runApp(
+    MyApp(
+      authProvider: authProvider,
+      barberProvider: barberProvider,
+      themeProvider: themeProvider,
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -76,16 +78,20 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => BookingProvider()),
         ChangeNotifierProvider.value(value: themeProvider),
       ],
-      child: Builder(builder: (context) {
-        final router = createAppRouter(context.read<AuthProvider>().authStateChanges);
-        return MaterialApp.router(
-          title: FlavorConfig.displayName,
-          theme: AppTheme.lightTheme(),
-          darkTheme: AppTheme.darkTheme(),
-          themeMode: context.watch<ThemeProvider>().themeMode,
-          routerConfig: router,
-        );
-      }),
+      child: Builder(
+        builder: (context) {
+          final router = createAppRouter(
+            context.read<AuthProvider>().authStateChanges,
+          );
+          return MaterialApp.router(
+            title: FlavorConfig.displayName,
+            theme: AppTheme.lightTheme(),
+            darkTheme: AppTheme.darkTheme(),
+            themeMode: context.watch<ThemeProvider>().themeMode,
+            routerConfig: router,
+          );
+        },
+      ),
     );
   }
 }

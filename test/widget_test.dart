@@ -3,7 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:provider/provider.dart';
 
-import 'package:barber_pro/main.dart';
+// Use the customer flavor main which defines `MyApp` used in tests.
+import 'package:barber_pro/main_customer.dart';
 import 'package:barber_pro/providers/auth_provider.dart';
 import 'package:barber_pro/providers/theme_provider.dart';
 import 'package:barber_pro/services/fake_auth_service.dart';
@@ -24,7 +25,8 @@ class _InMemoryUserService implements BaseUserService {
   Future<User?> getUserById(String userId) async => _store[userId];
 
   @override
-  Stream<User?> getUserStream(String userId) => Stream<User?>.value(_store[userId]);
+  Stream<User?> getUserStream(String userId) =>
+      Stream<User?>.value(_store[userId]);
 
   @override
   Future<void> toggleFavoriteBarber(String userId, String barberId) async {}
@@ -54,12 +56,16 @@ class _InMemoryUserService implements BaseUserService {
 /// `authStateChanges` stream and `isAuthenticated` used by the router.
 class TestAuthProvider extends AuthProvider {
   TestAuthProvider()
-      : super(authService: FakeAuthService(), userService: _InMemoryUserService());
+    : super(
+        authService: FakeAuthService(),
+        userService: _InMemoryUserService(),
+      );
 
   @override
   // Return a stream that emits `null` once so GoRouter's refreshListenable
   // can consider the initial state without requiring Firebase.
-  Stream<firebase_auth.User?> get authStateChanges => Stream<firebase_auth.User?>.value(null);
+  Stream<firebase_auth.User?> get authStateChanges =>
+      Stream<firebase_auth.User?>.value(null);
 
   @override
   bool get isAuthenticated => false;
@@ -68,18 +74,24 @@ class TestAuthProvider extends AuthProvider {
 void main() {
   testWidgets('MyApp renders successfully', (WidgetTester tester) async {
     // Ensure a flavor is set so MyApp can read displayName and theming.
-    FlavorConfig.setFlavor(AppFlavor.customer, 'BarberPro Test', 'com.barberpro.test');
+    FlavorConfig.setFlavor(
+      AppFlavor.customer,
+      'BarberPro Test',
+      'com.barberpro.test',
+    );
 
     final fakeAuth = TestAuthProvider();
 
     // Build our app and trigger a frame.
     await tester.pumpWidget(
       MultiProvider(
-        providers: [ChangeNotifierProvider<AuthProvider>.value(value: fakeAuth)],
-          child: MyApp(
-            authProvider: fakeAuth,
-            themeProvider: await ThemeProvider.create(),
-          ),
+        providers: [
+          ChangeNotifierProvider<AuthProvider>.value(value: fakeAuth),
+        ],
+        child: MyApp(
+          authProvider: fakeAuth,
+          themeProvider: await ThemeProvider.create(),
+        ),
       ),
     );
 

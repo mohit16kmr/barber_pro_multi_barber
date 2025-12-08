@@ -97,17 +97,17 @@ class BarberIncome extends Equatable {
 
   @override
   List<Object?> get props => [
-        incomeId,
-        barberId,
-        shopId,
-        dailyEarnings,
-        monthlyEarnings,
-        totalEarnings,
-        bookingsCompleted,
-        monthlyBookings,
-        totalBookings,
-        date,
-        createdAt,
-        updatedAt,
-      ];
+    incomeId,
+    barberId,
+    shopId,
+    dailyEarnings,
+    monthlyEarnings,
+    totalEarnings,
+    bookingsCompleted,
+    monthlyBookings,
+    totalBookings,
+    date,
+    createdAt,
+    updatedAt,
+  ];
 }

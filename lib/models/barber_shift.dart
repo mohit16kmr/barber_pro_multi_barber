@@ -34,7 +34,9 @@ class BarberShift extends Equatable {
       barberId: data['barberId'] ?? '',
       shopId: data['shopId'] ?? '',
       startTime: (data['startTime'] as Timestamp).toDate(),
-      endTime: data['endTime'] != null ? (data['endTime'] as Timestamp).toDate() : null,
+      endTime: data['endTime'] != null
+          ? (data['endTime'] as Timestamp).toDate()
+          : null,
       isOnline: data['isOnline'] ?? true,
       totalEarnings: (data['totalEarnings'] ?? 0.0).toDouble(),
       totalCustomersServed: data['totalCustomersServed'] ?? 0,
@@ -85,15 +87,15 @@ class BarberShift extends Equatable {
 
   @override
   List<Object?> get props => [
-        shiftId,
-        barberId,
-        shopId,
-        startTime,
-        endTime,
-        isOnline,
-        totalEarnings,
-        totalCustomersServed,
-        createdAt,
-        updatedAt,
-      ];
+    shiftId,
+    barberId,
+    shopId,
+    startTime,
+    endTime,
+    isOnline,
+    totalEarnings,
+    totalCustomersServed,
+    createdAt,
+    updatedAt,
+  ];
 }

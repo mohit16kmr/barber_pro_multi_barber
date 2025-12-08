@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:barber_pro/providers/auth_provider.dart';
 import 'package:barber_pro/providers/booking_provider.dart';
+import 'package:barber_pro/providers/barber_provider.dart';
+import 'package:barber_pro/models/index.dart';
 
 /// Customer Home Screen
 class HomeScreen extends StatefulWidget {
@@ -16,8 +18,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Load bookings on home screen load
-    Future.microtask(() {
+    // Load bookings on home screen load after first frame to safely use context
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final customerId = context.read<AuthProvider>().currentUser?.uid;
       if (customerId != null) {
         context.read<BookingProvider>().loadCustomerBookings(customerId);
@@ -29,17 +32,15 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
     final user = authProvider.currentUser;
-    
+
     // Redirect to login if not authenticated
     if (!authProvider.isAuthenticated || user == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) context.go('/login');
       });
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    
+
     final userName = user.name.isNotEmpty ? user.name : 'User';
 
     return Scaffold(
@@ -99,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
             'Ready to get groomed? 💈',
             style: TextStyle(
               fontSize: 14,
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withAlpha((0.9 * 255).round()),
             ),
           ),
         ],
@@ -116,9 +117,9 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Text(
             'Quick Actions',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           Row(
@@ -167,7 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withAlpha((0.1 * 255).round()),
             border: Border.all(color: color, width: 1.5),
             borderRadius: BorderRadius.circular(12),
           ),
@@ -200,9 +201,9 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Text(
             'Upcoming Bookings',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           Consumer<BookingProvider>(
@@ -246,63 +247,123 @@ class _HomeScreenState extends State<HomeScreen> {
               final upcomingBookings = bookings.take(3).toList();
               return Column(
                 children: upcomingBookings.map((booking) {
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey[300]!),
-                      borderRadius: BorderRadius.circular(12),
+                  return FutureBuilder<Barber?>(
+                    future: context.read<BarberProvider>().getBarberById(
+                      booking.barberId,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Token #${booking.tokenNumber}',
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    fontWeight: FontWeight.bold,
+                    builder: (ctx, snapshot) {
+                      final barber = snapshot.data;
+                      // Compute progress based on barber.currentToken and queueLength
+                      double progress = 0.0;
+                      String shopLabel = 'Shop';
+                      String subLabel = '';
+                      if (barber != null) {
+                        shopLabel = barber.shopName.isNotEmpty
+                            ? barber.shopName
+                            : 'Shop';
+                        final position =
+                            booking.tokenNumber - barber.currentToken;
+                        final total = (barber.queueLength <= 0)
+                            ? 1
+                            : barber.queueLength;
+                        final remaining = position.clamp(0, total);
+                        progress = 1.0 - (remaining / total);
+                        subLabel = barber.address;
+                      }
+
+                      return InkWell(
+                        onTap: () => context.push(
+                          '/booking-details/${booking.bookingId}',
+                        ),
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey[300]!),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Token #${booking.tokenNumber} - $shopLabel',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyLarge
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        ),
+                                        if (subLabel.isNotEmpty)
+                                          Text(
+                                            subLabel,
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.bodySmall,
+                                          ),
+                                      ],
+                                    ),
                                   ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _getStatusColor(
+                                        booking.status,
+                                      ).withAlpha((0.2 * 255).round()),
+                                      border: Border.all(
+                                        color: _getStatusColor(booking.status),
+                                      ),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      booking.status.toUpperCase(),
+                                      style: TextStyle(
+                                        color: _getStatusColor(booking.status),
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              decoration: BoxDecoration(
-                                color: _getStatusColor(booking.status)
-                                    .withOpacity(0.2),
-                                border: Border.all(
-                                  color: _getStatusColor(booking.status),
-                                ),
-                                borderRadius: BorderRadius.circular(12),
+                              const SizedBox(height: 8),
+                              LinearProgressIndicator(
+                                value: progress.clamp(0.0, 1.0),
                               ),
-                              child: Text(
-                                booking.status.toUpperCase(),
-                                style: TextStyle(
-                                  color: _getStatusColor(booking.status),
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.access_time,
+                                    size: 14,
+                                    color: Colors.grey[600],
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    _formatDateTime(booking.bookingTime),
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Icon(Icons.access_time,
-                                size: 14, color: Colors.grey[600]),
-                            const SizedBox(width: 6),
-                            Text(
-                              _formatDateTime(booking.bookingTime),
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   );
                 }).toList(),
               );
@@ -318,10 +379,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return Consumer<BookingProvider>(
       builder: (context, bookingProvider, child) {
         final totalBookings = bookingProvider.myBookings.length;
-        final completedBookings =
-            bookingProvider.myBookings.where((b) => b.status == 'completed').length;
-        final waitingBookings =
-            bookingProvider.myBookings.where((b) => b.status == 'waiting').length;
+        final completedBookings = bookingProvider.myBookings
+            .where((b) => b.status == 'completed')
+            .length;
+        final waitingBookings = bookingProvider.myBookings
+            .where((b) => b.status == 'waiting')
+            .length;
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -330,9 +393,9 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Text(
                 'Your Stats',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
               Row(
@@ -369,7 +432,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withAlpha((0.1 * 255).round()),
           border: Border.all(color: color, width: 1.5),
           borderRadius: BorderRadius.circular(12),
         ),

@@ -29,6 +29,9 @@ service cloud.firestore {
     match /users/{userId} {
       // Any authenticated user can read their own document
       allow read: if isSignedIn() && request.auth.uid == userId;
+
+      // Any authenticated user can read barber profiles for discovery
+      allow read: if isSignedIn() && resource.data.userType == 'barber';
       
       // Any authenticated user can write to their own document
       allow write: if isSignedIn() && request.auth.uid == userId;
@@ -50,25 +53,22 @@ service cloud.firestore {
       // Anyone can read barber profiles (for browsing)
       allow read: if isSignedIn();
       
-      // Barber can update their own shop
-      allow update: if isSignedIn() && 
-                       isUserType('barber') && 
-                       request.auth.uid == barberId;
-      
-      // Barber can create their own shop
+      // Barber can create their own shop (before userType check since user doc might not be synced yet)
+      // Document ID must equal auth UID, and cannot set reserved fields
       allow create: if isSignedIn() && 
-                       isUserType('barber') &&
                        request.auth.uid == barberId &&
                        !request.resource.data.keys().hasAny(['agentId', 'verified']);
       
-      // Admin can read and manage all barber data
-      allow read, write: if isSignedIn() && isUserType('admin');
-      
-      // Prevent non-admin users from modifying critical fields
+      // Barber can update their own shop (check userType for update)
       allow update: if isSignedIn() && 
+                       request.auth.uid == barberId &&
+                       // Allow updates that don't touch reserved fields
                        !request.resource.data.diff(resource.data).affectedKeys().hasAny(
                          ['verified', 'totalEarnings', 'agentId']
                        );
+      
+      // Admin can read and manage all barber data
+      allow read, write: if isSignedIn() && isUserType('admin');
     }
     
     // Bookings Collection

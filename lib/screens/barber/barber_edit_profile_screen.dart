@@ -742,9 +742,9 @@ class _BarberEditProfileScreenState extends State<BarberEditProfileScreen> {
   // Show dialog to add or edit a service
   Future<void> _showAddEditServiceDialog({int? index}) async {
     final isEdit = index != null;
-    final nameController = TextEditingController(text: isEdit ? _services[index!].name : '');
-    final priceController = TextEditingController(text: isEdit ? _services[index!].price.toString() : '');
-    final durationController = TextEditingController(text: isEdit ? _services[index!].durationMinutes.toString() : '30');
+    final nameController = TextEditingController(text: isEdit ? _services[index].name : '');
+    final priceController = TextEditingController(text: isEdit ? _services[index].price.toString() : '');
+    final durationController = TextEditingController(text: isEdit ? _services[index].durationMinutes.toString() : '30');
 
     await showDialog(
       context: context,
@@ -792,7 +792,7 @@ class _BarberEditProfileScreenState extends State<BarberEditProfileScreen> {
                 final newService = Service(name: name, price: price, durationMinutes: duration);
                 setState(() {
                   if (isEdit) {
-                    _services[index!] = newService;
+                    _services[index] = newService;
                   } else {
                     _services.add(newService);
                   }

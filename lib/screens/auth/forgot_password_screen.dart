@@ -91,10 +91,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             children: [
               const SizedBox(height: 40),
 
-              if (_emailSent)
-                _buildSuccessView()
-              else
-                _buildResetForm(),
+              if (_emailSent) _buildSuccessView() else _buildResetForm(),
 
               const SizedBox(height: 40),
             ],
@@ -114,7 +111,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: const Color(0xFF1E88E5).withOpacity(0.1),
+              color: Color(0xFF1E88E5).withAlpha((0.1 * 255).round()),
               borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(
@@ -144,10 +141,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         const Text(
           'Enter your email address and we\'ll send you a link to reset your password.',
           textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 14,
-            color: Color(0xFF999999),
-          ),
+          style: TextStyle(fontSize: 14, color: Color(0xFF999999)),
         ),
 
         const SizedBox(height: 32),
@@ -157,7 +151,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.1),
+              color: Colors.red.withAlpha((0.1 * 255).round()),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: Colors.red),
             ),
@@ -194,8 +188,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     return 'Email is required';
                   }
                   if (!RegExp(
-                          r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
-                      .hasMatch(value!)) {
+                    r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+                  ).hasMatch(value!)) {
                     return 'Please enter a valid email';
                   }
                   return null;
@@ -220,8 +214,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         width: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
                         ),
                       )
                     : const Text(
@@ -281,7 +276,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.1),
+              color: Colors.green.withAlpha((0.1 * 255).round()),
               borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(
@@ -311,10 +306,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         Text(
           'We\'ve sent a password reset link to\n${_emailController.text}',
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Color(0xFF999999),
-          ),
+          style: const TextStyle(fontSize: 14, color: Color(0xFF999999)),
         ),
 
         const SizedBox(height: 12),
@@ -323,10 +315,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         const Text(
           'Please check your email and click the link to reset your password.',
           textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 12,
-            color: Color(0xFFAAAAAA),
-          ),
+          style: TextStyle(fontSize: 12, color: Color(0xFFAAAAAA)),
         ),
 
         const SizedBox(height: 40),
@@ -370,10 +359,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
           child: const Text(
             'Didn\'t receive the email? Try again',
-            style: TextStyle(
-              fontSize: 14,
-              color: Color(0xFF1E88E5),
-            ),
+            style: TextStyle(fontSize: 14, color: Color(0xFF1E88E5)),
           ),
         ),
       ],

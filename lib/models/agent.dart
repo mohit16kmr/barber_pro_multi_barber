@@ -9,7 +9,8 @@ class Agent extends Equatable {
   final String email;
   final String phone;
   final int shopsCount; // Number of shops registered by this agent
-  final List<String> shopIds; // List of barber shop IDs registered by this agent
+  final List<String>
+  shopIds; // List of barber shop IDs registered by this agent
   final double commissionRate; // Commission percentage (e.g., 5.0 = 5%)
   final double totalCommission; // Total commission earned
   final bool isActive;

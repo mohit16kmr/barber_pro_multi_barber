@@ -20,7 +20,8 @@ class _ShopManagementScreenState extends State<ShopManagementScreen> {
   final _barberEmailController = TextEditingController();
   final _barberExperienceController = TextEditingController();
   final _barberBioController = TextEditingController();
-  final _referralCodeController = TextEditingController(); // Referral Code field
+  final _referralCodeController =
+      TextEditingController(); // Referral Code field
   final ImagePicker _imagePicker = ImagePicker();
 
   bool _isLoading = false;
@@ -49,6 +50,7 @@ class _ShopManagementScreenState extends State<ShopManagementScreen> {
       setState(() => _errorMessage = 'Enter phone number to search');
       return;
     }
+    final messenger = ScaffoldMessenger.of(context);
 
     setState(() {
       _isSearchingBarber = true;
@@ -84,7 +86,7 @@ class _ShopManagementScreenState extends State<ShopManagementScreen> {
         _errorMessage = null;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         const SnackBar(
           content: Text('Barber found! Details auto-filled'),
           backgroundColor: Colors.green,
@@ -99,11 +101,16 @@ class _ShopManagementScreenState extends State<ShopManagementScreen> {
 
   /// Remove barber from shop
   Future<void> _removeBarber(String barberId) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final barberProvider = context.read<BarberProvider>();
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Remove Barber?'),
-        content: const Text('Are you sure you want to remove this barber from your shop?'),
+        content: const Text(
+          'Are you sure you want to remove this barber from your shop?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -124,23 +131,18 @@ class _ShopManagementScreenState extends State<ShopManagementScreen> {
       await barberService.deleteBarber(barberId);
 
       // Refresh provider list
-      final barberProvider = context.read<BarberProvider>();
       await barberProvider.loadAllBarbers();
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Barber removed successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Barber removed successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-        );
-      }
+      messenger.showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
     }
   }
 
@@ -188,9 +190,9 @@ class _ShopManagementScreenState extends State<ShopManagementScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -211,9 +213,9 @@ class _ShopManagementScreenState extends State<ShopManagementScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -377,10 +379,7 @@ class _ShopManagementScreenState extends State<ShopManagementScreen> {
                 children: [
                   const Text(
                     'Connected Barbers',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   ElevatedButton.icon(
                     onPressed: () {
@@ -437,16 +436,18 @@ class _ShopManagementScreenState extends State<ShopManagementScreen> {
                         margin: const EdgeInsets.only(bottom: 12),
                         child: ListTile(
                           leading: CircleAvatar(
-                            backgroundColor: isOnline ? Colors.green : Colors.grey,
+                            backgroundColor: isOnline
+                                ? Colors.green
+                                : Colors.grey,
                             child: Icon(
-                              isOnline ? Icons.check_circle : Icons.offline_bolt,
+                              isOnline
+                                  ? Icons.check_circle
+                                  : Icons.offline_bolt,
                               color: Colors.white,
                             ),
                           ),
                           title: Text(barber.ownerName),
-                          subtitle: Text(
-                            '${barber.phone} • 0 yrs exp',
-                          ),
+                          subtitle: Text('${barber.phone} • 0 yrs exp'),
                           trailing: Wrap(
                             spacing: 8,
                             children: [
@@ -526,7 +527,7 @@ class _ShopManagementScreenState extends State<ShopManagementScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.red.withOpacity(0.1),
+                          color: Colors.red.withAlpha((0.1 * 255).round()),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(color: Colors.red),
                         ),
@@ -571,11 +572,13 @@ class _ShopManagementScreenState extends State<ShopManagementScreen> {
                                         enabled: !_isSearchingBarber,
                                         decoration: InputDecoration(
                                           hintText: 'Enter phone number',
-                                          prefixIcon:
-                                              const Icon(Icons.phone_outlined),
+                                          prefixIcon: const Icon(
+                                            Icons.phone_outlined,
+                                          ),
                                           border: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
                                           ),
                                           contentPadding:
                                               const EdgeInsets.symmetric(
@@ -594,16 +597,14 @@ class _ShopManagementScreenState extends State<ShopManagementScreen> {
                                           ? const SizedBox(
                                               height: 16,
                                               width: 16,
-                                              child:
-                                                  CircularProgressIndicator(
+                                              child: CircularProgressIndicator(
                                                 strokeWidth: 2,
                                               ),
                                             )
                                           : const Icon(Icons.search),
                                       label: const Text('Search'),
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor:
-                                            Colors.amber[700],
+                                        backgroundColor: Colors.amber[700],
                                         foregroundColor: Colors.white,
                                         padding: const EdgeInsets.symmetric(
                                           horizontal: 16,
@@ -620,11 +621,8 @@ class _ShopManagementScreenState extends State<ShopManagementScreen> {
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
                                         color: Colors.green[50],
-                                        border: Border.all(
-                                          color: Colors.green,
-                                        ),
-                                        borderRadius:
-                                            BorderRadius.circular(6),
+                                        border: Border.all(color: Colors.green),
+                                        borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: const Row(
                                         children: [
@@ -715,8 +713,9 @@ class _ShopManagementScreenState extends State<ShopManagementScreen> {
                                       icon: const Icon(Icons.add_a_photo),
                                       label: const Text('Upload'),
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor:
-                                            const Color(0xFF1E88E5),
+                                        backgroundColor: const Color(
+                                          0xFF1E88E5,
+                                        ),
                                         foregroundColor: Colors.white,
                                       ),
                                     ),
@@ -766,8 +765,8 @@ class _ShopManagementScreenState extends State<ShopManagementScreen> {
                                 return 'Email is required';
                               }
                               if (!RegExp(
-                                      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
-                                  .hasMatch(value!)) {
+                                r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+                              ).hasMatch(value!)) {
                                 return 'Valid email is required';
                               }
                               return null;
@@ -827,13 +826,18 @@ class _ShopManagementScreenState extends State<ShopManagementScreen> {
                             decoration: InputDecoration(
                               hintText: 'Referral Code (Optional)',
                               prefixIcon: const Icon(Icons.badge_outlined),
-                              suffixIcon: _referralCodeController.text.isNotEmpty
-                                  ? const Icon(Icons.check_circle, color: Colors.green)
+                              suffixIcon:
+                                  _referralCodeController.text.isNotEmpty
+                                  ? const Icon(
+                                      Icons.check_circle,
+                                      color: Colors.green,
+                                    )
                                   : null,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              helperText: 'If you were registered by someone, enter their referral code here',
+                              helperText:
+                                  'If you were registered by someone, enter their referral code here',
                             ),
                             onChanged: (value) {
                               setState(() {}); // Refresh to show/hide checkmark
@@ -860,43 +864,47 @@ class _ShopManagementScreenState extends State<ShopManagementScreen> {
                           Wrap(
                             spacing: 8,
                             runSpacing: 8,
-                            children: [
-                              'Haircut',
-                              'Beard Trim',
-                              'Shaving',
-                              'Hair Coloring',
-                              'Styling',
-                              'Threading',
-                              'Hair Wash',
-                              'Head Massage',
-                            ].map((specialty) {
-                              final isSelected =
-                                  _selectedSpecialties.contains(specialty);
-                              return FilterChip(
-                                label: Text(specialty),
-                                selected: isSelected,
-                                onSelected: (selected) {
-                                  setState(() {
-                                    if (selected) {
-                                      _selectedSpecialties.add(specialty);
-                                    } else {
-                                      _selectedSpecialties.remove(specialty);
-                                    }
-                                  });
-                                },
-                                backgroundColor: Colors.grey[200],
-                                selectedColor:
-                                    const Color(0xFF1E88E5).withOpacity(0.2),
-                                labelStyle: TextStyle(
-                                  color: isSelected
-                                      ? const Color(0xFF1E88E5)
-                                      : Colors.grey[700],
-                                  fontWeight: isSelected
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                ),
-                              );
-                            }).toList(),
+                            children:
+                                [
+                                  'Haircut',
+                                  'Beard Trim',
+                                  'Shaving',
+                                  'Hair Coloring',
+                                  'Styling',
+                                  'Threading',
+                                  'Hair Wash',
+                                  'Head Massage',
+                                ].map((specialty) {
+                                  final isSelected = _selectedSpecialties
+                                      .contains(specialty);
+                                  return FilterChip(
+                                    label: Text(specialty),
+                                    selected: isSelected,
+                                    onSelected: (selected) {
+                                      setState(() {
+                                        if (selected) {
+                                          _selectedSpecialties.add(specialty);
+                                        } else {
+                                          _selectedSpecialties.remove(
+                                            specialty,
+                                          );
+                                        }
+                                      });
+                                    },
+                                    backgroundColor: Colors.grey[200],
+                                    selectedColor: const Color(
+                                      0xFF1E88E5,
+                                    ).withAlpha((0.2 * 255).round()),
+                                    labelStyle: TextStyle(
+                                      color: isSelected
+                                          ? const Color(0xFF1E88E5)
+                                          : Colors.grey[700],
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                    ),
+                                  );
+                                }).toList(),
                           ),
 
                           const SizedBox(height: 24),
@@ -936,8 +944,8 @@ class _ShopManagementScreenState extends State<ShopManagementScreen> {
                                           child: CircularProgressIndicator(
                                             valueColor:
                                                 AlwaysStoppedAnimation<Color>(
-                                              Colors.white,
-                                            ),
+                                                  Colors.white,
+                                                ),
                                           ),
                                         )
                                       : const Text('Add Barber'),

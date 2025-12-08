@@ -27,13 +27,17 @@ class AuthProvider extends ChangeNotifier {
   String? get userRole => _currentUser?.userType;
   bool get needsRegistration => _needsRegistration;
 
-  AuthProvider({BaseAuthService? authService, BaseUserService? userService, BarberService? barberService})
-      : _authService = authService ?? AuthService(),
-        _userService = userService ?? UserService(),
-        _barberService = barberService ?? BarberService();
+  AuthProvider({
+    BaseAuthService? authService,
+    BaseUserService? userService,
+    BarberService? barberService,
+  }) : _authService = authService ?? AuthService(),
+       _userService = userService ?? UserService(),
+       _barberService = barberService ?? BarberService();
 
   /// Expose underlying auth state change stream so routing can listen
-  Stream<firebase_auth.User?> get authStateChanges => _authService.authStateChanges as Stream<firebase_auth.User?>;
+  Stream<firebase_auth.User?> get authStateChanges =>
+      _authService.authStateChanges as Stream<firebase_auth.User?>;
 
   /// Initialize auth state from Firebase or fake service
   Future<void> initializeAuth() async {
@@ -45,11 +49,21 @@ class AuthProvider extends ChangeNotifier {
 
       if (firebaseUser != null) {
         _currentUser = await _userService.getUserById(firebaseUser.uid);
-        _isAuthenticated = true;
 
+        // If Firestore profile exists, mark authenticated and update last login.
         if (_currentUser != null) {
+          _isAuthenticated = true;
           _logger.i('Auth initialized with user: ${_currentUser!.email}');
           await _userService.updateLastLogin(_currentUser!.uid);
+        } else {
+          // Authenticated at Firebase but no Firestore profile yet.
+          // Mark needsRegistration so UI/routes can send user to complete profile
+          // instead of assuming a non-null profile (prevents Home/Profile hang).
+          _isAuthenticated = true;
+          _needsRegistration = true;
+          _logger.w(
+            'Firebase user ${firebaseUser.uid} has no Firestore profile; needs registration',
+          );
         }
       } else {
         _isAuthenticated = false;
@@ -80,8 +94,10 @@ class AuthProvider extends ChangeNotifier {
       // Determine if this Firebase user already has a Firestore profile.
       try {
         final exists = await _userService.userExists(user.uid);
-        _logger.i('Firestore profile check for uid ${user.uid}: exists=$exists');
-        
+        _logger.i(
+          'Firestore profile check for uid ${user.uid}: exists=$exists',
+        );
+
         if (exists) {
           // Persist/update and load full profile
           try {
@@ -90,23 +106,31 @@ class AuthProvider extends ChangeNotifier {
             _logger.e('Error persisting user after Google sign-in: $e');
             _logger.d(st);
             final msg = e.toString();
-            if (!(msg.contains('Pigeon') || msg.contains("type 'List") || msg.contains('is not a subtype'))) {
+            if (!(msg.contains('Pigeon') ||
+                msg.contains("type 'List") ||
+                msg.contains('is not a subtype'))) {
               rethrow;
             }
           }
 
           _currentUser = await _userService.getUserById(user.uid);
           _needsRegistration = false;
-          _logger.i('Existing user loaded from Firestore: ${_currentUser?.email} (role=${_currentUser?.userType})');
+          _logger.i(
+            'Existing user loaded from Firestore: ${_currentUser?.email} (role=${_currentUser?.userType})',
+          );
         } else {
           // New user: do not create a full profile yet; indicate registration needed
           _currentUser = user;
           _needsRegistration = true;
-          _logger.i('New user detected (no Firestore profile yet): ${user.email}. Will route to registration.');
+          _logger.i(
+            'New user detected (no Firestore profile yet): ${user.email}. Will route to registration.',
+          );
         }
 
         _isAuthenticated = true;
-        _logger.i('Successfully signed in with Google (needsRegistration=$_needsRegistration)');
+        _logger.i(
+          'Successfully signed in with Google (needsRegistration=$_needsRegistration)',
+        );
         notifyListeners();
         return true;
       } catch (e) {
@@ -128,7 +152,7 @@ class AuthProvider extends ChangeNotifier {
     try {
       _setLoading(true);
       _clearError();
-      
+
       if (_currentUser == null) {
         _setError('No user is currently logged in');
         return false;
@@ -247,10 +271,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// Login with email and password (Customer/Barber)
-  Future<bool> login({
-    required String email,
-    required String password,
-  }) async {
+  Future<bool> login({required String email, required String password}) async {
     try {
       _setLoading(true);
       _clearError();
@@ -346,8 +367,12 @@ class AuthProvider extends ChangeNotifier {
         // completely when a platform API returns a List where an object
         // is expected. Detect common pattern in the error message.
         final msg = e.toString();
-        if (msg.contains('Pigeon') || msg.contains('type \'List') || msg.contains('is not a subtype')) {
-          _logger.w('Detected Pigeon/platform casting issue while creating user — continuing since Firebase user exists.');
+        if (msg.contains('Pigeon') ||
+            msg.contains('type \'List') ||
+            msg.contains('is not a subtype')) {
+          _logger.w(
+            'Detected Pigeon/platform casting issue while creating user — continuing since Firebase user exists.',
+          );
         } else {
           _setError('Failed to create user profile: ${e.toString()}');
           return false;
@@ -355,10 +380,13 @@ class AuthProvider extends ChangeNotifier {
       }
 
       // Step 3: If barber signup, create Barber record with provided details
-      if (userRole == 'barber' && (phone != null || address != null || shopName != null)) {
+      if (userRole == 'barber' &&
+          (phone != null || address != null || shopName != null)) {
         try {
-          _logger.i('Creating Barber record for new barber signup: ${firebaseUser.uid}');
-          
+          _logger.i(
+            'Creating Barber record for new barber signup: ${firebaseUser.uid}',
+          );
+
           final barber = Barber(
             barberId: '', // Will be set by Firestore
             shopName: shopName ?? '',
@@ -371,15 +399,17 @@ class AuthProvider extends ChangeNotifier {
 
           if (referralCode != null && referralCode.isNotEmpty) {
             // Create barber with referral code validation
+            // Pass firebaseUser.uid directly to avoid race condition with FirebaseAuth.instance.currentUser
             await _barberService.createBarberWithAgent(
               barber: barber,
               referralCode: referralCode,
             );
           } else {
             // Create barber without referral code
-            await _barberService.createBarber(barber);
+            // Pass firebaseUser.uid directly to avoid race condition with FirebaseAuth.instance.currentUser
+            await _barberService.createBarber(barber, uid: firebaseUser.uid);
           }
-          
+
           _logger.i('Barber record created successfully');
         } catch (e, st) {
           _logger.e('Error creating barber record: $e');
@@ -392,7 +422,9 @@ class AuthProvider extends ChangeNotifier {
             _logger.w('Unable to set provider error state');
           }
           // Also log a warning for developers
-          _logger.w('Barber record creation failed, but user account exists. User can complete profile later. Error surfaced to UI.');
+          _logger.w(
+            'Barber record creation failed, but user account exists. User can complete profile later. Error surfaced to UI.',
+          );
         }
       }
 
@@ -538,7 +570,8 @@ class AuthProvider extends ChangeNotifier {
           state: state ?? _currentUser!.state,
           shopId: shopId ?? _currentUser!.shopId,
           referralCode: referralCode ?? _currentUser!.referralCode,
-          yearsOfExperience: yearsOfExperience ?? _currentUser!.yearsOfExperience,
+          yearsOfExperience:
+              yearsOfExperience ?? _currentUser!.yearsOfExperience,
           specialties: specialties ?? _currentUser!.specialties,
           bio: bio ?? _currentUser!.bio,
         );
@@ -581,10 +614,7 @@ class AuthProvider extends ChangeNotifier {
         );
       } else {
         _currentUser = _currentUser!.copyWith(
-          favoriteBarbers: [
-            ..._currentUser!.favoriteBarbers,
-            barberId,
-          ],
+          favoriteBarbers: [..._currentUser!.favoriteBarbers, barberId],
         );
       }
 

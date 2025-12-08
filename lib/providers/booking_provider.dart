@@ -34,9 +34,7 @@ class BookingProvider extends ChangeNotifier {
     try {
       _setLoading(true);
       _clearError();
-      _logger.i(
-        'Creating booking - customer: $customerId, barber: $barberId',
-      );
+      _logger.i('Creating booking - customer: $customerId, barber: $barberId');
 
       final bookingId = await _bookingService.createBooking(
         customerId,
@@ -49,7 +47,7 @@ class BookingProvider extends ChangeNotifier {
 
       // Fetch the created booking and refresh the user's booking list
       await loadBooking(bookingId);
-      
+
       // Reload bookings list to show newly created booking
       final success = await loadCustomerBookings(customerId);
       if (!success) {
@@ -60,18 +58,20 @@ class BookingProvider extends ChangeNotifier {
       return bookingId;
     } catch (e) {
       _logger.e('Error creating booking: $e');
-      
+
       // Fallback: Create sample booking locally when Firestore fails
       _logger.i('Using fallback booking creation');
       try {
-        final sampleBookingId = 'booking_${DateTime.now().millisecondsSinceEpoch}';
+        final sampleBookingId =
+            'booking_${DateTime.now().millisecondsSinceEpoch}';
         final totalPrice = services.fold<double>(0, (sum, s) => sum + s.price);
-        
+
         final fallbackBooking = Booking(
           bookingId: sampleBookingId,
           customerId: customerId,
           barberId: barberId,
-          tokenNumber: (DateTime.now().millisecondsSinceEpoch % 100).toInt() + 1,
+          tokenNumber:
+              (DateTime.now().millisecondsSinceEpoch % 100).toInt() + 1,
           services: services,
           totalPrice: totalPrice,
           status: 'waiting',
@@ -80,15 +80,17 @@ class BookingProvider extends ChangeNotifier {
           bookingTime: DateTime.now(),
           estimatedWaitTime: estimatedWaitTime,
         );
-        
+
         _currentBooking = fallbackBooking;
         _estimatedWaitTime = estimatedWaitTime;
-        
+
         // Add to myBookings list so it shows up immediately
         _myBookings.add(fallbackBooking);
-        
-        _logger.i('Fallback booking created: $sampleBookingId and added to list');
-        
+
+        _logger.i(
+          'Fallback booking created: $sampleBookingId and added to list',
+        );
+
         notifyListeners();
         return sampleBookingId;
       } catch (fallbackError) {
@@ -142,8 +144,10 @@ class BookingProvider extends ChangeNotifier {
       _clearError();
       _logger.i('Loading bookings for customer: $customerId');
 
-      final fetchedBookings = await _bookingService.getCustomerBookings(customerId);
-      
+      final fetchedBookings = await _bookingService.getCustomerBookings(
+        customerId,
+      );
+
       // Only replace list if fetch succeeds, otherwise keep existing bookings
       if (fetchedBookings.isNotEmpty || _myBookings.isEmpty) {
         _myBookings = fetchedBookings;
@@ -206,9 +210,7 @@ class BookingProvider extends ChangeNotifier {
     try {
       _setLoading(true);
       _clearError();
-      _logger.i(
-        'Adding rating $rating and review to booking: $bookingId',
-      );
+      _logger.i('Adding rating $rating and review to booking: $bookingId');
 
       await _bookingService.addRatingAndReview(bookingId, rating, review);
 
@@ -240,7 +242,9 @@ class BookingProvider extends ChangeNotifier {
     required int estimatedWaitTime,
   }) async {
     try {
-      _logger.i('Updating wait time for booking: $bookingId to $estimatedWaitTime minutes');
+      _logger.i(
+        'Updating wait time for booking: $bookingId to $estimatedWaitTime minutes',
+      );
 
       await _bookingService.updateEstimatedWaitTime(
         bookingId,
@@ -296,12 +300,14 @@ class BookingProvider extends ChangeNotifier {
 
   /// Get position in queue
   int getQueuePosition(String barberId, String bookingId) {
-    final index = _barberQueue.indexWhere((booking) =>
-        booking.barberId == barberId &&
-        booking.bookingId == bookingId &&
-        (booking.status == 'waiting' ||
-            booking.status == 'next' ||
-            booking.status == 'serving'));
+    final index = _barberQueue.indexWhere(
+      (booking) =>
+          booking.barberId == barberId &&
+          booking.bookingId == bookingId &&
+          (booking.status == 'waiting' ||
+              booking.status == 'next' ||
+              booking.status == 'serving'),
+    );
 
     return index >= 0 ? index + 1 : -1;
   }
@@ -309,7 +315,10 @@ class BookingProvider extends ChangeNotifier {
   /// Calculate total hours worked (for completed bookings)
   int calculateTotalServiceMinutes(String barberId) {
     return _barberQueue
-        .where((booking) => booking.barberId == barberId && booking.status == 'completed')
+        .where(
+          (booking) =>
+              booking.barberId == barberId && booking.status == 'completed',
+        )
         .fold<int>(0, (sum, booking) => sum + (booking.actualServiceTime ?? 0));
   }
 

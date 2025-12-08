@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:logger/logger.dart';
+import 'dart:async';
 import '../config/app_constants.dart';
 import '../models/index.dart';
 
@@ -20,7 +21,9 @@ class BarberService {
     String? referralCode,
   }) async {
     try {
-      _logger.i('Creating barber shop with referralCode=$referralCode, shopName=${barber.shopName}');
+      _logger.i(
+        'Creating barber shop with referralCode=$referralCode, shopName=${barber.shopName}',
+      );
 
       // Validate agent if provided
       if (referralCode != null && referralCode.isNotEmpty) {
@@ -28,9 +31,9 @@ class BarberService {
 
         // Check if agent exists
         final agentDoc = await _firestore
-          .collection(AppConstants.agentsCollection)
-          .doc(referralCode)
-          .get();
+            .collection(AppConstants.agentsCollection)
+            .doc(referralCode)
+            .get();
 
         if (!agentDoc.exists) {
           throw Exception('Agent not found with code/id: $referralCode');
@@ -63,12 +66,16 @@ class BarberService {
         // barber documents must be created with the auth UID as the document id.
         // Failing fast here prevents creating a document with an auto-id
         // which would be rejected by security rules and silently lost.
-        throw Exception('Cannot create barber: no authenticated user available');
+        throw Exception(
+          'Cannot create barber: no authenticated user available',
+        );
       }
 
       // If agent ID provided, register shop to agent
       if (referralCode != null && referralCode.isNotEmpty) {
-        _logger.i('Registering shop $createdBarberId to agent/referral $referralCode');
+        _logger.i(
+          'Registering shop $createdBarberId to agent/referral $referralCode',
+        );
 
         await _firestore
             .collection(AppConstants.agentsCollection)
@@ -79,10 +86,14 @@ class BarberService {
               'updatedAt': Timestamp.now(),
             });
 
-        _logger.i('Shop registered to agent/referral. Code: $referralCode, Shop: $createdBarberId');
+        _logger.i(
+          'Shop registered to agent/referral. Code: $referralCode, Shop: $createdBarberId',
+        );
       }
 
-      _logger.i('Barber shop created with ID: $createdBarberId, referralCode: $referralCode');
+      _logger.i(
+        'Barber shop created with ID: $createdBarberId, referralCode: $referralCode',
+      );
       return createdBarberId;
     } catch (e) {
       _logger.e('Error creating barber with agent: $e');
@@ -91,22 +102,42 @@ class BarberService {
   }
 
   /// Create a new barber shop (original method)
-  Future<String> createBarber(Barber barber) async {
+  /// If uid is provided, use it directly for doc creation (preferred to avoid race conditions).
+  /// Otherwise, read from FirebaseAuth.instance.currentUser.
+  Future<String> createBarber(Barber barber, {String? uid}) async {
     try {
       _logger.i('Creating barber shop: ${barber.shopName}');
 
-      // Create document using the authenticated user's UID when possible
-      final currentUid = fb_auth.FirebaseAuth.instance.currentUser?.uid;
-      if (currentUid != null) {
+      // Use provided uid, or read from current auth user
+      String? useUid = uid;
+      if (useUid == null) {
+        final currentUser = fb_auth.FirebaseAuth.instance.currentUser;
+        useUid = currentUser?.uid;
+        _logger.i(
+          'Barber creation auth check - currentUser: ${currentUser?.email}, UID: $useUid',
+        );
+      } else {
+        _logger.i('Barber creation using provided UID: $useUid');
+      }
+
+      if (useUid != null) {
         final docRef = _firestore
             .collection(AppConstants.barbersCollection)
-            .doc(currentUid);
+            .doc(useUid);
+        _logger.i(
+          'Creating barber document at path: barbers/$useUid with shopName=${barber.shopName}',
+        );
         await docRef.set(barber.toFirestore());
-        _logger.i('Barber shop created with ID: $currentUid');
-        return currentUid;
+        _logger.i('Barber shop successfully created with ID: $useUid');
+        return useUid;
       } else {
         // Enforce UID-based creation to comply with Firestore rules.
-        throw Exception('Cannot create barber: no authenticated user available');
+        _logger.e(
+          'NO AUTHENTICATED USER: Cannot create barber document without auth UID. currentUser is null and no uid provided.',
+        );
+        throw Exception(
+          'Cannot create barber: no authenticated user available',
+        );
       }
     } catch (e) {
       _logger.e('Error creating barber: $e');
@@ -146,14 +177,81 @@ class BarberService {
         .doc(barberId)
         .snapshots()
         .map((doc) {
+          if (!doc.exists) {
+            _logger.w('Barber $barberId not found in stream');
+            return null;
+          }
+          return Barber.fromFirestore(doc);
+        })
+        .handleError((error) {
+          _logger.e('Error in barber stream: $error');
+        });
+  }
+
+  /// Get barber from users collection by id (fallback for legacy data)
+  Future<Barber?> getBarberFromUsersById(String id) async {
+    try {
+      _logger.i('Fetching barber from users collection: $id');
+      final doc = await _firestore
+          .collection(AppConstants.usersCollection)
+          .doc(id)
+          .get();
       if (!doc.exists) {
-        _logger.w('Barber $barberId not found in stream');
+        _logger.w('User doc $id not found in users collection');
         return null;
       }
-      return Barber.fromFirestore(doc);
-    }).handleError((error) {
-      _logger.e('Error in barber stream: $error');
-    });
+      final userData = doc.data() as Map<String, dynamic>;
+
+      DateTime createdAt;
+      final rawCreated = userData['createdAt'];
+      if (rawCreated is Timestamp) {
+        createdAt = rawCreated.toDate();
+      } else if (rawCreated is DateTime) {
+        createdAt = rawCreated;
+      } else if (rawCreated is String) {
+        try {
+          createdAt = DateTime.parse(rawCreated);
+        } catch (_) {
+          createdAt = DateTime.now();
+        }
+      } else {
+        createdAt = DateTime.now();
+      }
+
+      final shopName =
+          (userData['shopName'] as String?) ??
+          (userData['shop'] as String?) ??
+          (userData['name'] as String?) ??
+          '';
+      final address =
+          (userData['address'] as String?) ??
+          (userData['town'] as String?) ??
+          (userData['village'] as String?) ??
+          (userData['city'] as String?) ??
+          (userData['state'] as String?) ??
+          '';
+
+      return Barber(
+        barberId: doc.id,
+        shopName: shopName,
+        shopId: (userData['shopId'] as String?) ?? '',
+        ownerName: (userData['name'] as String?) ?? '',
+        phone: (userData['phone'] as String?) ?? '',
+        address: address,
+        createdAt: createdAt,
+        isOnline: (userData['isOnline'] as bool?) ?? false,
+        region: {
+          'state': userData['state'],
+          'district': userData['district'],
+          'block': userData['block'],
+          'town': userData['town'],
+          'village': userData['village'],
+        },
+      );
+    } catch (e) {
+      _logger.e('Error fetching barber from users: $e');
+      return null;
+    }
   }
 
   /// Get all barbers
@@ -163,8 +261,7 @@ class BarberService {
     try {
       _logger.i('Fetching all barbers (onlineOnly: $onlineOnly)');
 
-      Query query =
-          _firestore.collection(AppConstants.barbersCollection);
+      Query query = _firestore.collection(AppConstants.barbersCollection);
 
       // Only filter by online status if explicitly requested
       if (onlineOnly) {
@@ -185,6 +282,204 @@ class BarberService {
     }
   }
 
+  /// Simple method: Get barbers from users collection with timeout protection
+  Future<List<Barber>> getAllBarbersSimple() async {
+    try {
+      _logger.i('Simple barber fetch from users collection');
+
+      final querySnapshot = await _firestore
+          .collection(AppConstants.usersCollection)
+          .where('userType', isEqualTo: 'barber')
+          .get()
+          .timeout(
+            const Duration(seconds: 5),
+            onTimeout: () {
+              _logger.w('Barber query timed out after 5s');
+              throw TimeoutException('Barber query timed out');
+            },
+          );
+
+      final barbers = <Barber>[];
+      for (final doc in querySnapshot.docs) {
+        try {
+          final userData = doc.data();
+
+          DateTime createdAtDt = DateTime.now();
+          if (userData['createdAt'] != null) {
+            final createdAt = userData['createdAt'];
+            if (createdAt is Timestamp) {
+              createdAtDt = createdAt.toDate();
+            }
+          }
+
+          // Map user doc fields more reliably to Barber model
+          final shopName =
+              (userData['shopName'] as String?) ??
+              (userData['shop'] as String?) ??
+              (userData['name'] as String?) ??
+              'Shop';
+          final address =
+              (userData['address'] as String?) ??
+              (userData['town'] as String?) ??
+              (userData['village'] as String?) ??
+              (userData['city'] as String?) ??
+              (userData['state'] as String?) ??
+              'Location';
+          final barber = Barber(
+            barberId: doc.id,
+            shopName: shopName,
+            shopId: (userData['shopId'] as String?) ?? doc.id,
+            ownerName: (userData['name'] as String?) ?? '',
+            phone: (userData['phone'] as String?) ?? '',
+            address: address,
+            createdAt: createdAtDt,
+            isOnline: (userData['isOnline'] as bool?) ?? false,
+            region: {
+              'state': userData['state'],
+              'district': userData['district'],
+              'block': userData['block'],
+              'town': userData['town'],
+              'village': userData['village'],
+            },
+          );
+          barbers.add(barber);
+        } catch (e) {
+          _logger.w('Conversion error for user ${doc.id}: $e');
+        }
+      }
+
+      _logger.i('Simple fetch: found ${barbers.length} barbers');
+      return barbers;
+    } catch (e) {
+      _logger.e('Simple barber fetch error: $e');
+      return [];
+    }
+  }
+
+  /// Get all barbers from users collection (userType == 'barber')
+  /// This is a fallback for when barber profiles are stored in users collection
+  Future<List<Barber>> getAllBarbersFromUsers({bool onlineOnly = false}) async {
+    try {
+      _logger.i(
+        'Fetching all barbers from users collection (onlineOnly: $onlineOnly)',
+      );
+
+      Query query = _firestore
+          .collection(AppConstants.usersCollection)
+          .where('userType', isEqualTo: 'barber');
+
+      // Only filter by online status if explicitly requested
+      if (onlineOnly) {
+        query = query.where('isOnline', isEqualTo: true);
+      }
+
+      final querySnapshot = await query.get();
+
+      // Convert User documents to Barber objects (normalize types)
+      final barbers = querySnapshot.docs.map((doc) {
+        final userData = doc.data() as Map<String, dynamic>;
+
+        // createdAt in users may be a Firestore Timestamp or a DateTime string/object
+        DateTime createdAt;
+        final rawCreated = userData['createdAt'];
+        if (rawCreated is Timestamp) {
+          createdAt = rawCreated.toDate();
+        } else if (rawCreated is DateTime) {
+          createdAt = rawCreated;
+        } else if (rawCreated is String) {
+          try {
+            createdAt = DateTime.parse(rawCreated);
+          } catch (_) {
+            createdAt = DateTime.now();
+          }
+        } else {
+          createdAt = DateTime.now();
+        }
+
+        // Map User fields to Barber fields
+        // Map user fields into Barber including region info
+        final shopName =
+            (userData['shopName'] as String?) ??
+            (userData['shop'] as String?) ??
+            (userData['name'] as String?) ??
+            '';
+        final address =
+            (userData['address'] as String?) ??
+            (userData['town'] as String?) ??
+            (userData['village'] as String?) ??
+            (userData['city'] as String?) ??
+            (userData['state'] as String?) ??
+            '';
+
+        return Barber(
+          barberId: doc.id,
+          shopName: shopName,
+          shopId: (userData['shopId'] as String?) ?? '',
+          ownerName: (userData['name'] as String?) ?? '',
+          phone: (userData['phone'] as String?) ?? '',
+          address: address,
+          createdAt: createdAt,
+          isOnline: (userData['isOnline'] as bool?) ?? false,
+          region: {
+            'state': userData['state'],
+            'district': userData['district'],
+            'block': userData['block'],
+            'town': userData['town'],
+            'village': userData['village'],
+          },
+        );
+      }).toList();
+
+      _logger.i(
+        'Fetched ${barbers.length} barbers from users collection (onlineOnly=$onlineOnly)',
+      );
+      return barbers;
+    } catch (e) {
+      _logger.e('Error fetching barbers from users collection: $e');
+      return []; // Return empty list instead of throwing to prevent app crash
+    }
+  }
+
+  /// Get all barbers - tries barbers collection first, falls back to users collection
+  Future<List<Barber>> getAllBarbersWithFallback({
+    bool onlineOnly = false,
+  }) async {
+    try {
+      _logger.i(
+        'Fetching all barbers (with fallback) (onlineOnly: $onlineOnly)',
+      );
+
+      // Try fetching from barbers collection first
+      try {
+        final barbersCollectionData = await getAllBarbers(
+          onlineOnly: onlineOnly,
+        );
+        if (barbersCollectionData.isNotEmpty) {
+          _logger.i(
+            'Found ${barbersCollectionData.length} barbers in barbers collection',
+          );
+          return barbersCollectionData;
+        }
+      } catch (e) {
+        _logger.w(
+          'Error fetching from barbers collection, trying users collection: $e',
+        );
+      }
+
+      // Fallback to users collection
+      final barbersFromUsers = await getAllBarbersFromUsers(
+        onlineOnly: onlineOnly,
+      );
+      _logger.i(
+        'Fallback: Found ${barbersFromUsers.length} barbers in users collection',
+      );
+      return barbersFromUsers;
+    } catch (e) {
+      _logger.e('Error fetching all barbers with fallback: $e');
+      return []; // Return empty list instead of throwing
+    }
+  }
+
   /// Get barbers by referral code
   Future<List<Barber>> getBarbersByReferralCode(String referralCode) async {
     try {
@@ -199,7 +494,9 @@ class BarberService {
           .map((doc) => Barber.fromFirestore(doc))
           .toList();
 
-      _logger.i('Fetched ${barbers.length} barbers for referralCode $referralCode');
+      _logger.i(
+        'Fetched ${barbers.length} barbers for referralCode $referralCode',
+      );
       return barbers;
     } catch (e) {
       _logger.e('Error fetching barbers by referralCode: $e');
@@ -232,9 +529,7 @@ class BarberService {
       await _firestore
           .collection(AppConstants.barbersCollection)
           .doc(barberId)
-          .update({
-        'isOnline': isOnline,
-      });
+          .update({'isOnline': isOnline});
 
       _logger.i('Barber online status updated');
     } catch (e) {
@@ -251,8 +546,9 @@ class BarberService {
 
       // Use a transaction to ensure atomicity
       final token = await _firestore.runTransaction((transaction) async {
-        final barberRef =
-            _firestore.collection(AppConstants.barbersCollection).doc(barberId);
+        final barberRef = _firestore
+            .collection(AppConstants.barbersCollection)
+            .doc(barberId);
         final barberSnapshot = await transaction.get(barberRef);
 
         if (!barberSnapshot.exists) {
@@ -284,11 +580,7 @@ class BarberService {
       await _firestore
           .collection(AppConstants.barbersCollection)
           .doc(barberId)
-          .update({
-        'currentToken': 0,
-        'queue': [],
-        'queueLength': 0,
-      });
+          .update({'currentToken': 0, 'queue': [], 'queueLength': 0});
 
       _logger.i('Daily token counter reset for barber $barberId');
     } catch (e) {
@@ -306,9 +598,9 @@ class BarberService {
           .collection(AppConstants.barbersCollection)
           .doc(barberId)
           .update({
-        'queue': FieldValue.arrayUnion([booking]),
-        'queueLength': FieldValue.increment(1),
-      });
+            'queue': FieldValue.arrayUnion([booking]),
+            'queueLength': FieldValue.increment(1),
+          });
 
       _logger.i('Booking added to queue');
     } catch (e) {
@@ -318,7 +610,10 @@ class BarberService {
   }
 
   /// Remove booking from queue
-  Future<void> removeFromQueue(String barberId, Map<String, dynamic> booking) async {
+  Future<void> removeFromQueue(
+    String barberId,
+    Map<String, dynamic> booking,
+  ) async {
     try {
       _logger.i('Removing booking from queue for barber: $barberId');
 
@@ -326,9 +621,9 @@ class BarberService {
           .collection(AppConstants.barbersCollection)
           .doc(barberId)
           .update({
-        'queue': FieldValue.arrayRemove([booking]),
-        'queueLength': FieldValue.increment(-1),
-      });
+            'queue': FieldValue.arrayRemove([booking]),
+            'queueLength': FieldValue.increment(-1),
+          });
 
       _logger.i('Booking removed from queue');
     } catch (e) {
@@ -345,9 +640,7 @@ class BarberService {
       await _firestore
           .collection(AppConstants.barbersCollection)
           .doc(barberId)
-          .update({
-        'rating': rating,
-      });
+          .update({'rating': rating});
 
       _logger.i('Barber rating updated');
     } catch (e) {
@@ -364,9 +657,7 @@ class BarberService {
       await _firestore
           .collection(AppConstants.barbersCollection)
           .doc(barberId)
-          .update({
-        'totalEarnings': FieldValue.increment(amount),
-      });
+          .update({'totalEarnings': FieldValue.increment(amount)});
 
       _logger.i('Barber earnings updated');
     } catch (e) {
