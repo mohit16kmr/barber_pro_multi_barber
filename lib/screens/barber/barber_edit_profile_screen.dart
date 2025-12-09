@@ -217,6 +217,7 @@ class _BarberEditProfileScreenState extends State<BarberEditProfileScreen> {
           if (_barberDoc != null) {
             try {
               final barberService = BarberService();
+              final barberProvider = context.read<BarberProvider>();
               final updatedBarber = _barberDoc!.copyWith(
                 services: _services,
                 shopName: shopId.isNotEmpty ? shopId : _barberDoc!.shopName,
@@ -229,9 +230,10 @@ class _BarberEditProfileScreenState extends State<BarberEditProfileScreen> {
               // Light refresh: fetch the single barber and select it in the provider
               try {
                 if (mounted) setState(() => _isRefreshingBarber = true);
-                final refreshed = await context.read<BarberProvider>().getBarberById(_barberDoc!.barberId);
+                final refreshed = await barberProvider.getBarberById(_barberDoc!.barberId);
+                if (!mounted) return;
                 if (refreshed != null) {
-                  context.read<BarberProvider>().selectBarber(refreshed);
+                  barberProvider.selectBarber(refreshed);
                 }
               } catch (_) {
                 // ignore
@@ -250,22 +252,26 @@ class _BarberEditProfileScreenState extends State<BarberEditProfileScreen> {
             }
           }
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile updated successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        context.pop();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Profile updated successfully'),
+                backgroundColor: Colors.green,
+              ),
+            );
+            context.pop();
+          }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              authProvider.errorMessage ?? 'Failed to update profile',
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                authProvider.errorMessage ?? 'Failed to update profile',
+              ),
+              backgroundColor: Colors.red,
             ),
-            backgroundColor: Colors.red,
-          ),
-        );
+          );
+        }
       }
     } catch (e) {
       if (!mounted) return;
@@ -577,7 +583,7 @@ class _BarberEditProfileScreenState extends State<BarberEditProfileScreen> {
                         ),
                       ),
                     );
-                  }).toList(),
+                  }),
                   const SizedBox(height: 8),
                   Align(
                     alignment: Alignment.centerLeft,
