@@ -1,0 +1,110 @@
+version: '3.8'
+
+services:
+  # Redis service for caching and token storage
+  redis:
+    image: redis:7-alpine
+    container_name: barberpro-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - barberpro-network
+    restart: unless-stopped
+
+  # Firestore Emulator (for local development)
+  firestore-emulator:
+    image: orijtech/google-cloud-firestore-emulator:latest
+    container_name: barberpro-firestore
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    environment:
+      - FIRESTORE_EMULATOR_HOST=0.0.0.0:8080
+    volumes:
+      - firestore_data:/data
+    networks:
+      - barberpro-network
+    restart: unless-stopped
+    profiles:
+      - dev  # Only run in development
+
+  # Backend NestJS API
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: barberpro-backend
+    ports:
+      - "3000:3000"
+    environment:
+      # Node environment
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 3000
+
+      # JWT configuration
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-minimum-32-characters-long}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-3600}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-your-super-secret-refresh-key-minimum-32-characters-long}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-2592000}
+
+      # Firebase configuration
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-barber-pro-dev}
+      FIREBASE_PRIVATE_KEY_ID: ${FIREBASE_PRIVATE_KEY_ID:-}
+      FIREBASE_PRIVATE_KEY: ${FIREBASE_PRIVATE_KEY:-}
+      FIREBASE_CLIENT_EMAIL: ${FIREBASE_CLIENT_EMAIL:-}
+      FIREBASE_CLIENT_ID: ${FIREBASE_CLIENT_ID:-}
+
+      # Redis configuration
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_DB: 0
+
+      # Firestore Emulator (for development)
+      FIRESTORE_EMULATOR_HOST: ${FIRESTORE_EMULATOR_HOST:-}
+
+      # API configuration
+      API_VERSION: v1
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001,http://localhost:8080}
+      API_BASE_URL: ${API_BASE_URL:-http://localhost:3000}
+
+      # Notifications
+      FCM_SERVER_KEY: ${FCM_SERVER_KEY:-}
+      SMS_PROVIDER: ${SMS_PROVIDER:-none}
+
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+
+    volumes:
+      - ./backend/src:/app/src:cached
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - barberpro-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  redis_data:
+    driver: local
+  firestore_data:
+    driver: local
+
+networks:
+  barberpro-network:
+    driver: bridge
