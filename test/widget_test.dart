@@ -75,18 +75,23 @@ class TestAuthProvider extends AuthProvider {
 }
 
 /// Minimal fake barber service to avoid Firestore in widget tests.
-class _FakeBarberService {
+class _FakeBarberService extends BarberService {
   _FakeBarberService();
 
+  @override
   Future<String> createBarberWithAgent({required Barber barber, String? referralCode}) async {
     return 'fake-barber-id';
   }
 
+  @override
   Future<String> createBarber(Barber barber, {String? uid}) async {
     return uid ?? 'fake-barber-id';
   }
 
+  @override
   Future<Barber?> getBarberById(String barberId) async => null;
+
+  @override
   Stream<Barber?> getBarberStream(String barberId) => Stream.value(null);
 }
 
