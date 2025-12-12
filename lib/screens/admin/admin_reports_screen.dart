@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:barber_pro/providers/barber_provider.dart';
+import 'package:barber_pro_multi_barber/providers/barber_provider.dart';
 
 /// Admin Reports & Analytics - View detailed reports and trends
 class AdminReportsScreen extends StatefulWidget {

@@ -1,4 +1,4 @@
-import 'package:barber_pro/models/index.dart';
+import 'package:barber_pro_multi_barber/models/index.dart';
 
 /// Business Logic Utilities for BarberPro
 

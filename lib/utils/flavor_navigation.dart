@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
-import 'package:barber_pro/config/flavor_config.dart';
+import 'package:barber_pro_multi_barber/config/flavor_config.dart';
 
 /// Small helper to prevent cross-flavor navigation at runtime.
 /// Use `flavorSafeGo(context, path)` instead of `context.go(path)` when

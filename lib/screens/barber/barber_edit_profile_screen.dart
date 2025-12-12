@@ -7,7 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../../providers/auth_provider.dart';
 import 'package:uuid/uuid.dart';
-import 'package:barber_pro/providers/barber_provider.dart';
+import 'package:barber_pro_multi_barber/providers/barber_provider.dart';
 import '../../models/index.dart';
 import '../../services/index.dart';
 

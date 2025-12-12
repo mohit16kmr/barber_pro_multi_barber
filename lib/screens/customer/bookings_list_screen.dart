@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:barber_pro/models/booking.dart';
-import 'package:barber_pro/providers/booking_provider.dart';
-import 'package:barber_pro/providers/auth_provider.dart';
+import 'package:barber_pro_multi_barber/models/booking.dart';
+import 'package:barber_pro_multi_barber/providers/booking_provider.dart';
+import 'package:barber_pro_multi_barber/providers/auth_provider.dart';
 
 /// Customer bookings list screen
 class BookingsListScreen extends StatefulWidget {

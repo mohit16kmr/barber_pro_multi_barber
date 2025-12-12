@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:barber_pro/providers/barber_provider.dart';
-import 'package:barber_pro/providers/auth_provider.dart';
+import 'package:barber_pro_multi_barber/providers/barber_provider.dart';
+import 'package:barber_pro_multi_barber/providers/auth_provider.dart';
 
 /// Admin Shop Management - Manage all shop settings and barbers
 class AdminShopManagementScreen extends StatefulWidget {
