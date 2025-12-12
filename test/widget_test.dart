@@ -4,13 +4,13 @@ import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:provider/provider.dart';
 
 // Use the customer flavor main which defines `MyApp` used in tests.
-import 'package:barber_pro/main_customer.dart';
-import 'package:barber_pro/providers/auth_provider.dart';
-import 'package:barber_pro/providers/theme_provider.dart';
-import 'package:barber_pro/services/fake_auth_service.dart';
-import 'package:barber_pro/services/user_service_base.dart';
-import 'package:barber_pro/models/index.dart';
-import 'package:barber_pro/config/flavor_config.dart';
+import 'package:barber_pro_multi_barber/main_customer.dart';
+import 'package:barber_pro_multi_barber/providers/auth_provider.dart';
+import 'package:barber_pro_multi_barber/providers/theme_provider.dart';
+import 'package:barber_pro_multi_barber/services/fake_auth_service.dart';
+import 'package:barber_pro_multi_barber/services/user_service_base.dart';
+import 'package:barber_pro_multi_barber/models/index.dart';
+import 'package:barber_pro_multi_barber/config/flavor_config.dart';
 
 /// Lightweight in-memory user service for tests to avoid Firestore.
 class _InMemoryUserService implements BaseUserService {

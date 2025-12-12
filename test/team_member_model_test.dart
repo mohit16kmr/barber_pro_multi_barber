@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:barber_pro/models/team_member.dart';
+import 'package:barber_pro_multi_barber/models/team_member.dart';
 
 void main() {
   test('TeamMember JSON roundtrip', () {

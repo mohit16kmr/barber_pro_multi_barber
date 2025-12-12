@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:barber_pro/config/app_constants.dart';
+import 'package:barber_pro_multi_barber/config/app_constants.dart';
 
 /// Test to verify the booking display fix constants are properly defined.
 /// This test does NOT require Firebase initialization.
