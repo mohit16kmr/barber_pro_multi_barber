@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 import 'service.dart';
+import 'team_member.dart';
 
 /// Barber Shop Model
 class Barber extends Equatable {
@@ -28,6 +29,8 @@ class Barber extends Equatable {
   final Map<String, dynamic>?
   workingHours; // {monday: {open: '09:00', close: '18:00'}, ...}
   final Map<String, dynamic>? region; // {state, district, block, town, village}
+  final int dailyCapacity; // Number of customers barber can serve per day
+  final List<TeamMember> teamMembers; // Team members working in the shop
 
   const Barber({
     required this.barberId,
@@ -52,6 +55,8 @@ class Barber extends Equatable {
     required this.createdAt,
     this.workingHours,
     this.region,
+    this.dailyCapacity = 10,
+    this.teamMembers = const [],
   });
 
   factory Barber.fromFirestore(DocumentSnapshot doc) {
@@ -87,6 +92,12 @@ class Barber extends Equatable {
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       workingHours: data['workingHours'],
       region: data['region'] as Map<String, dynamic>?,
+      dailyCapacity: data['dailyCapacity'] ?? 10,
+      teamMembers:
+          (data['teamMembers'] as List<dynamic>?)
+              ?.map((t) => TeamMember.fromJson(t as Map<String, dynamic>))
+              .toList() ??
+          [],
     );
   }
 
@@ -113,6 +124,8 @@ class Barber extends Equatable {
       'createdAt': Timestamp.fromDate(createdAt),
       'workingHours': workingHours,
       'region': region,
+      'dailyCapacity': dailyCapacity,
+      'teamMembers': teamMembers.map((t) => t.toJson()).toList(),
     };
   }
 
@@ -139,6 +152,8 @@ class Barber extends Equatable {
     DateTime? createdAt,
     Map<String, dynamic>? workingHours,
     Map<String, dynamic>? region,
+    int? dailyCapacity,
+    List<TeamMember>? teamMembers,
   }) {
     return Barber(
       barberId: barberId ?? this.barberId,
@@ -163,6 +178,8 @@ class Barber extends Equatable {
       createdAt: createdAt ?? this.createdAt,
       workingHours: workingHours ?? this.workingHours,
       region: region ?? this.region,
+      dailyCapacity: dailyCapacity ?? this.dailyCapacity,
+      teamMembers: teamMembers ?? this.teamMembers,
     );
   }
 
@@ -190,5 +207,7 @@ class Barber extends Equatable {
     createdAt,
     workingHours,
     region,
+    dailyCapacity,
+    teamMembers,
   ];
 }

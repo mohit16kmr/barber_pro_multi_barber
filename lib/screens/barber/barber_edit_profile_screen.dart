@@ -37,6 +37,10 @@ class _BarberEditProfileScreenState extends State<BarberEditProfileScreen> {
   late TextEditingController _streetController;
   late TextEditingController _nearbyLocationController;
   
+  // Daily capacity and team members
+  int _dailyCapacity = 10;
+  List<TeamMember> _teamMembers = [];
+  
   bool _isLoading = false;
   List<Service> _services = [];
   Barber? _barberDoc;
@@ -83,6 +87,7 @@ class _BarberEditProfileScreenState extends State<BarberEditProfileScreen> {
     // No specialties initialization needed - using services instead
     // Load barber document to get editable services
     final barberService = BarberService();
+    // Daily capacity and team members will be loaded from _barberDoc after it's fetched
     () async {
       try {
         final uid = user?.uid;
@@ -92,6 +97,8 @@ class _BarberEditProfileScreenState extends State<BarberEditProfileScreen> {
             setState(() {
               _barberDoc = barber;
               _services = List<Service>.from(barber.services);
+              _dailyCapacity = barber.dailyCapacity;
+              _teamMembers = List<TeamMember>.from(barber.teamMembers);
             });
           }
         }
@@ -317,6 +324,8 @@ class _BarberEditProfileScreenState extends State<BarberEditProfileScreen> {
                 phone: phone.isNotEmpty ? phone : _barberDoc!.phone,
                 address: city.isNotEmpty ? city : _barberDoc!.address,
                 referralCode: referralCode.isNotEmpty ? referralCode : _barberDoc!.referralCode,
+                dailyCapacity: _dailyCapacity,
+                teamMembers: _teamMembers,
               );
 
               await barberService.updateBarber(_barberDoc!.barberId, updatedBarber);
@@ -661,6 +670,118 @@ class _BarberEditProfileScreenState extends State<BarberEditProfileScreen> {
               ),
               const SizedBox(height: 24),
 
+              // Daily Capacity Section
+              _buildSectionHeader('Shop Details'),
+              const SizedBox(height: 12),
+
+              // Daily Capacity Field
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Text(
+                          'Daily Capacity (Customers/day)',
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                        ),
+                        const SizedBox(width: 8),
+                        const Text('*', style: TextStyle(color: Colors.red)),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                            controller: TextEditingController(text: _dailyCapacity.toString()),
+                            onChanged: (value) {
+                              setState(() {
+                                _dailyCapacity = int.tryParse(value) ?? 10;
+                              });
+                            },
+                            decoration: InputDecoration(
+                              hintText: 'e.g., 15',
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.blue[50],
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.blue),
+                          ),
+                          child: Text(
+                            '$_dailyCapacity',
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // Team Members Section
+              _buildSectionHeader('Team Members'),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Text(
+                  'Add all barbers working in your shop',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+              Column(
+                children: [
+                  ..._teamMembers.asMap().entries.map((entry) {
+                    final idx = entry.key;
+                    final member = entry.value;
+                    return Card(
+                      child: ListTile(
+                        title: Text(member.name),
+                        subtitle: Text(member.phone),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit, color: Color(0xFF1E88E5)),
+                              onPressed: () => _showAddEditTeamMemberDialog(index: idx),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () => _removeTeamMember(idx),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _showAddEditTeamMemberDialog(),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Add Team Member'),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+
               // About Section
               _buildSectionHeader('About & Bio'),
               const SizedBox(height: 12),
@@ -991,6 +1112,91 @@ class _BarberEditProfileScreenState extends State<BarberEditProfileScreen> {
             onPressed: () {
               setState(() {
                 _services.removeAt(index);
+              });
+              Navigator.of(context).pop();
+            },
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showAddEditTeamMemberDialog({int? index}) async {
+    final isEdit = index != null;
+    final nameController = TextEditingController(text: isEdit ? _teamMembers[index].name : '');
+    final phoneController = TextEditingController(text: isEdit ? _teamMembers[index].phone : '');
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(isEdit ? 'Edit Team Member' : 'Add Team Member'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Barber Name *'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: phoneController,
+                  decoration: const InputDecoration(labelText: 'Phone Number *'),
+                  keyboardType: TextInputType.phone,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final name = nameController.text.trim();
+                final phone = phoneController.text.trim();
+
+                if (name.isEmpty || phone.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please fill in all fields')),
+                  );
+                  return;
+                }
+
+                final newMember = TeamMember(name: name, phone: phone);
+                setState(() {
+                  if (isEdit) {
+                    _teamMembers[index] = newMember;
+                  } else {
+                    _teamMembers.add(newMember);
+                  }
+                });
+
+                Navigator.of(context).pop();
+              },
+              child: Text(isEdit ? 'Save' : 'Add'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _removeTeamMember(int index) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove Team Member'),
+        content: const Text('Are you sure you want to remove this team member?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                _teamMembers.removeAt(index);
               });
               Navigator.of(context).pop();
             },
