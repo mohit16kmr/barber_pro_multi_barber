@@ -9,12 +9,6 @@ import 'auth_service_base.dart';
 class AuthService implements BaseAuthService {
   final firebase_auth.FirebaseAuth _firebaseAuth =
       firebase_auth.FirebaseAuth.instance;
-  // Initialize GoogleSignIn with proper scopes and server client ID for OAuth
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: ['email', 'profile'],
-    serverClientId:
-        '612832799916-62rrkmddvjr6k9n482f89i5cm3g6khs9.apps.googleusercontent.com',
-  );
   final Logger _logger = Logger();
 
   // Get current user
@@ -43,10 +37,12 @@ class AuthService implements BaseAuthService {
 
       // Use a fresh GoogleSignIn instance for each sign-in attempt to avoid
       // reusing cached/native state that may cause platform-channel mismatches.
+      // Note: serverClientId should be Web OAuth client ID (for server-side token validation)
+      // Android client ID is configured automatically from google-services.json
       final GoogleSignIn googleSignIn = GoogleSignIn(
         scopes: ['email', 'profile'],
-        serverClientId:
-            '612832799916-62rrkmddvjr6k9n482f89i5cm3g6khs9.apps.googleusercontent.com',
+        serverClientId: '612832799916-62rrkmddvjr6k9n482f89i5cm3g6khs9.apps.googleusercontent.com',
+        forceCodeForRefreshToken: true,
       );
 
       GoogleSignInAccount? googleUser;
@@ -56,6 +52,15 @@ class AuthService implements BaseAuthService {
         _logger.d('googleSignIn.signIn() completed. googleUser=$googleUser');
       } catch (e) {
         _logger.e('Exception during googleSignIn.signIn(): $e');
+        
+        // Handle Google Play Services errors
+        if (e.toString().contains('SecurityException') || 
+            e.toString().contains('Unknown calling package')) {
+          _logger.e('Google Play Services version mismatch detected.');
+          _logger.i('SOLUTION: Update Google Play Services from Play Store');
+          rethrow;
+        }
+        
         // Handle Pigeon/platform channel casting errors
         if (e.toString().contains('PigeonUserDetails') ||
             e.toString().contains("type 'List<Object?>") ||
@@ -314,11 +319,12 @@ class AuthService implements BaseAuthService {
       // Sign out from Firebase
       await _firebaseAuth.signOut();
 
-      // Sign out from Google Sign-In
+      // Sign out from Google Sign-In (create local instance)
       try {
-        await _googleSignIn.signOut();
+        final googleSignIn = GoogleSignIn();
+        await googleSignIn.signOut();
         // Also disconnect to ensure the account is fully cleared from the plugin
-        await _googleSignIn.disconnect();
+        await googleSignIn.disconnect();
       } catch (e) {
         _logger.w('GoogleSignIn signOut/disconnect had an issue: $e');
       }

@@ -212,17 +212,24 @@ class _LoginScreenState extends State<LoginScreen> {
           context.go('/home');
         }
       } else {
+        String errorMsg = authProvider.errorMessage ?? 'Google sign-in failed. Please try again.';
+        
+        // Check if it's a Play Services issue
+        if (errorMsg.contains('SecurityException') || 
+            errorMsg.contains('Unknown calling package') ||
+            errorMsg.contains('ApiException: 10')) {
+          errorMsg = 'Google Play Services needs update.\n\nGo to Play Store → Search "Google Play Services" → Update';
+        }
+        
         setState(() {
-          _errorMessage =
-              authProvider.errorMessage ??
-              'Google sign-in failed. Please try again.';
+          _errorMessage = errorMsg;
         });
 
         // Show error in snackbar too for visibility
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(_errorMessage ?? 'Google sign-in failed'),
+              content: Text(errorMsg),
               backgroundColor: Colors.red,
               action: SnackBarAction(
                 label: 'Retry',
