@@ -507,7 +507,10 @@ class AuthProvider extends ChangeNotifier {
           if (state != null && state.isNotEmpty) region['state'] = state;
           if (district != null && district.isNotEmpty) region['district'] = district;
           if (block != null && block.isNotEmpty) region['block'] = block;
-          if (village != null && village.isNotEmpty) region['village'] = village;
+          if (village != null && village.isNotEmpty) {
+            region['village'] = village;
+            region['town'] = village; // Also add as 'town' for compatibility
+          }
           if (street != null && street.isNotEmpty) region['street'] = street;
           
           final barber = Barber(
