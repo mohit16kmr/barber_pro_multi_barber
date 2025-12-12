@@ -1,50 +1,96 @@
-name: Build Flutter APK
+name: Build Flutter artifacts (APKs & AABs)
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    env:
+      # adjust these if your project uses different entrypoints or flavors
+      ADMIN_ENTRY: lib/main_admin.dart
+      BARBER_ENTRY: lib/main_barber.dart
+      CUSTOMER_ENTRY: lib/main_customer.dart
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
+          flutter-version: 'stable'
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build Customer APK
-        run: flutter build apk --flavor customer -t lib/main_customer.dart --release
+      - name: Prepare Android signing (optional)
+        if: ${{ secrets.ANDROID_KEYSTORE != '' }}
+        run: |
+          echo "Decoding keystore from secret"
+          echo "$ANDROID_KEYSTORE" | base64 -d > android/keystore.jks
+          cat > android/key.properties <<'EOF'
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          storeFile=keystore.jks
+          EOF
 
-      - name: Build Barber APK
-        run: flutter build apk --flavor barber -t lib/main_barber.dart --release
+      - name: Debug: list android outputs (pre-build)
+        run: ls -la build || true
 
-      - name: Build Admin APK
-        run: flutter build apk --flavor admin -t lib/main_admin.dart --release
+      - name: Build Admin APK & AAB
+        run: |
+          flutter build apk -t $ADMIN_ENTRY --release --split-per-abi || flutter build apk -t $ADMIN_ENTRY --release
+          flutter build appbundle -t $ADMIN_ENTRY --release || true
 
-      - name: Upload Customer APK
+      - name: Build Barber APK & AAB
+        run: |
+          flutter build apk -t $BARBER_ENTRY --release --split-per-abi || flutter build apk -t $BARBER_ENTRY --release
+          flutter build appbundle -t $BARBER_ENTRY --release || true
+
+      - name: Build Customer APK & AAB
+        run: |
+          flutter build apk -t $CUSTOMER_ENTRY --release --split-per-abi || flutter build apk -t $CUSTOMER_ENTRY --release
+          flutter build appbundle -t $CUSTOMER_ENTRY --release || true
+
+      - name: Collect APKs
+        run: |
+          mkdir -p artifacts/apks
+          cp -r build/app/outputs/flutter-apk/*.apk artifacts/apks/ || true
+          find build -name "*-release-*.apk" -exec cp {} artifacts/apks/ \; || true
+
+      - name: Collect AABs
+        run: |
+          mkdir -p artifacts/aabs
+          cp -r build/app/outputs/bundle/**/*.aab artifacts/aabs/ 2>/dev/null || true
+          find build -name "*.aab" -exec cp {} artifacts/aabs/ \; || true
+
+      - name: Upload APK artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: app-customer-release-apk
-          path: build/app/outputs/flutter-apk/app-customer-release.apk
+          name: flutter-apks
+          path: artifacts/apks
 
-      - name: Upload Barber APK
+      - name: Upload AAB artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: app-barber-release-apk
-          path: build/app/outputs/flutter-apk/app-barber-release.apk
+          name: flutter-aabs
+          path: artifacts/aabs
 
-      - name: Upload Admin APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-admin-release-apk
-          path: build/app/outputs/flutter-apk/app-admin-release.apk
+      - name: Output build tree
+        run: |
+          echo "== build/app/outputs/flutter-apk =="
+          ls -la build/app/outputs/flutter-apk || true
+          echo "== build/app/outputs/bundle =="
+          ls -la build/app/outputs/bundle || true
