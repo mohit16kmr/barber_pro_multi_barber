@@ -11,6 +11,8 @@ import 'package:barber_pro_multi_barber/services/fake_auth_service.dart';
 import 'package:barber_pro_multi_barber/services/user_service_base.dart';
 import 'package:barber_pro_multi_barber/models/index.dart';
 import 'package:barber_pro_multi_barber/config/flavor_config.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:barber_pro_multi_barber/firebase_options.dart';
 
 /// Lightweight in-memory user service for tests to avoid Firestore.
 class _InMemoryUserService implements BaseUserService {
@@ -79,6 +81,10 @@ void main() {
       'BarberPro Test',
       'com.barberpro.test',
     );
+
+    // Initialize Firebase for tests (use Android options for host VM)
+    TestWidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.android);
 
     final fakeAuth = TestAuthProvider();
 
